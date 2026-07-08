@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Breach Replay - Project Phases</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090d12;
+        --panel: #111923;
+        --panel-2: #172231;
+        --ink: #edf6ff;
+        --muted: #9fb1c5;
+        --line: #2a394a;
+        --blue: #68b6ff;
+        --green: #67d99a;
+        --yellow: #ffd166;
+        --red: #ff6b6b;
+        --violet: #b99cff;
+        --cyan: #5ce1e6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 72px;
+      }
+
+      header,
+      section {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      header {
+        display: grid;
+        gap: 18px;
+        padding: 30px;
+        background: linear-gradient(145deg, #121b28, #0d1219);
+      }
+
+      section {
+        margin-top: 20px;
+        padding: 24px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 860px;
+        font-size: clamp(2.2rem, 5vw, 4.35rem);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 14px;
+        font-size: 1.45rem;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 1rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      .subtitle {
+        max-width: 780px;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #0e151e;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 650;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 14px;
+      }
+
+      .phase {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .phase-label {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+      }
+
+      .phase-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: #243243;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .phase-window {
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-weight: 650;
+      }
+
+      .phase-body {
+        display: grid;
+        gap: 14px;
+      }
+
+      .phase-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #101821;
+      }
+
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      code {
+        color: var(--cyan);
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .callout {
+        border-color: color-mix(in srgb, var(--yellow), var(--line) 42%);
+        background: #1b1a12;
+      }
+
+      .blue {
+        border-color: color-mix(in srgb, var(--blue), var(--line) 48%);
+      }
+
+      .green {
+        border-color: color-mix(in srgb, var(--green), var(--line) 48%);
+      }
+
+      .yellow {
+        border-color: color-mix(in srgb, var(--yellow), var(--line) 48%);
+      }
+
+      .red {
+        border-color: color-mix(in srgb, var(--red), var(--line) 48%);
+      }
+
+      .violet {
+        border-color: color-mix(in srgb, var(--violet), var(--line) 48%);
+      }
+
+      @media (max-width: 900px) {
+        .phase,
+        .phase-grid,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="chips">
+          <span class="chip">Roadmap</span>
+          <span class="chip">Release Plan</span>
+          <span class="chip">SDK</span>
+          <span class="chip">Replay Studio</span>
+          <span class="chip">OpenAI Ready</span>
+        </div>
+        <h1>Agent Breach Replay Project Phases</h1>
+        <p class="subtitle">
+          A phased plan for building Agent Breach Replay from a local proof of
+          value into an OpenAI-ready security replay platform for tool-using AI
+          agents.
+        </p>
+      </header>
+
+      <section>
+        <h2>Phase Roadmap</h2>
+        <div class="timeline">
+          <article class="phase blue">
+            <div class="phase-label">
+              <span class="phase-number">0</span>
+              <span class="phase-window">Foundation</span>
+            </div>
+            <div class="phase-body">
+              <h3>Product Definition and Architecture</h3>
+              <p>
+                Lock the product thesis, system design, privacy posture, and
+                build prompts so every agent or developer works from the same
+                direction.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>README product direction</li>
+                    <li>architecture page</li>
+                    <li>goal page</li>
+                    <li>phase roadmap</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>clear product promise</li>
+                    <li>defined system components</li>
+                    <li>defined first release scope</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>Scope drift into generic observability instead of agent security replay.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase green">
+            <div class="phase-label">
+              <span class="phase-number">1</span>
+              <span class="phase-window">v0.1</span>
+            </div>
+            <div class="phase-body">
+              <h3>Local Replay Prototype</h3>
+              <p>
+                Build the first working replay studio with local sample traces.
+                No backend required yet. The goal is to prove the visual
+                security story.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>Next.js studio shell</li>
+                    <li>sample trace fixtures</li>
+                    <li>timeline replay</li>
+                    <li>flow graph</li>
+                    <li>security predicate panel</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>unsafe chain is visually obvious</li>
+                    <li>guardrailed run can be compared</li>
+                    <li>demo works without network setup</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>The UI looks polished but does not explain why the action was unsafe.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase yellow">
+            <div class="phase-label">
+              <span class="phase-number">2</span>
+              <span class="phase-window">v0.2</span>
+            </div>
+            <div class="phase-body">
+              <h3>Trace Schema, SDK, and Detectors</h3>
+              <p>
+                Define the durable trace contract, build the TypeScript SDK, and
+                run deterministic detectors before using LLMs for explanation.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>JSON trace schema</li>
+                    <li>TypeScript trace SDK</li>
+                    <li>metadata-only capture mode</li>
+                    <li>redaction helpers</li>
+                    <li>first detector rules</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>SDK emits replay-ready traces</li>
+                    <li>detectors explain finding evidence</li>
+                    <li>raw data is not required</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>Influence tracking feels magical. Keep it explicit with <code>influencedBy</code> links.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase violet">
+            <div class="phase-label">
+              <span class="phase-number">3</span>
+              <span class="phase-window">v0.3</span>
+            </div>
+            <div class="phase-body">
+              <h3>OpenAI Explanations and Report Export</h3>
+              <p>
+                Use OpenAI models to turn deterministic findings into clear
+                incident narratives, guardrail recommendations, and exportable
+                reports.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>OpenAI report generator</li>
+                    <li>guardrail recommendation prompts</li>
+                    <li>report export view</li>
+                    <li>trace explanation panel</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>LLM explains only triggered findings</li>
+                    <li>reports cite trace evidence</li>
+                    <li>private data remains redacted</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>The model overstates certainty. Keep explanations grounded in event IDs.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase red">
+            <div class="phase-label">
+              <span class="phase-number">4</span>
+              <span class="phase-window">v0.4</span>
+            </div>
+            <div class="phase-body">
+              <h3>Persistence, Moss Retrieval, and Similar Incidents</h3>
+              <p>
+                Add durable storage with Postgres and semantic retrieval with
+                Moss so teams can search incidents and compare recurring
+                failure patterns.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>Postgres schema</li>
+                    <li>project and run storage</li>
+                    <li>Moss incident indexing</li>
+                    <li>similar incident search</li>
+                    <li>retention controls</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>runs persist across sessions</li>
+                    <li>similar findings can be retrieved</li>
+                    <li>tenant boundaries are explicit</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>Trace storage grows quickly. Keep payloads small and structured.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase blue">
+            <div class="phase-label">
+              <span class="phase-number">5</span>
+              <span class="phase-window">v0.5</span>
+            </div>
+            <div class="phase-body">
+              <h3>Adapters and Real Agent Integrations</h3>
+              <p>
+                Connect the replay studio to real agent traces, starting with an
+                OpenAI Agents SDK adapter and generic JSON import.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>OpenAI trace adapter</li>
+                    <li>JSON import/export</li>
+                    <li>generic tool wrapper example</li>
+                    <li>LangGraph integration draft</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>external traces normalize cleanly</li>
+                    <li>missing security fields are surfaced</li>
+                    <li>examples are reproducible</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>Adapters lose important context. Make unknown trust explicit, not silent.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase green">
+            <div class="phase-label">
+              <span class="phase-number">6</span>
+              <span class="phase-window">v1.0</span>
+            </div>
+            <div class="phase-body">
+              <h3>OpenAI-Ready Release</h3>
+              <p>
+                Harden the product for a serious external review: privacy,
+                security, deployment, SDK packaging, examples, and docs.
+              </p>
+              <div class="phase-grid">
+                <div class="card">
+                  <h3>Deliverables</h3>
+                  <ul>
+                    <li>Vercel deployment</li>
+                    <li>npm SDK package</li>
+                    <li>PyPI SDK package draft</li>
+                    <li>privacy documentation</li>
+                    <li>demo script</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Exit Criteria</h3>
+                  <ul>
+                    <li>clear OpenAI-facing demo</li>
+                    <li>no raw-data dependency</li>
+                    <li>findings are evidence-backed</li>
+                    <li>setup is documented</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <h3>Primary Risk</h3>
+                  <p>Overclaiming prevention. Position as security replay and hardening support.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cross-Phase Principles</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Privacy First</h3>
+            <p>Metadata-only by default. Redact locally. Hash sensitive values. Make capture mode visible.</p>
+          </article>
+          <article class="card">
+            <h3>Rules Before LLMs</h3>
+            <p>Deterministic detectors trigger findings. OpenAI models explain, summarize, and recommend.</p>
+          </article>
+          <article class="card">
+            <h3>Security Replay, Not Generic Logs</h3>
+            <p>Focus on trust, influence, authority, tool boundaries, policy decisions, and evidence.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="callout">
+        <h2>Recommended Next Step</h2>
+        <p>
+          Start Phase 1 by creating the Next.js replay studio shell, shared trace
+          fixtures, and one end-to-end Vendor Email Assistant scenario. That
+          gives the project a working product spine before deeper platform work.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

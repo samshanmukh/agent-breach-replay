@@ -1,0 +1,32 @@
+{
+  "id": "openai_run_vendor_email",
+  "workflow_name": "Vendor Email Assistant",
+  "created_at": "2026-07-08T12:00:00.000Z",
+  "spans": [
+    {
+      "id": "span_email_read",
+      "type": "tool",
+      "name": "email.read",
+      "metadata": {
+        "trust": "untrusted",
+        "target": "vendor@example.net",
+        "targetClass": "untrusted",
+        "summary": "External vendor email read",
+        "details": "Metadata-only imported span. Raw email body omitted."
+      }
+    },
+    {
+      "id": "span_secret_read",
+      "type": "tool",
+      "name": "fs.read",
+      "metadata": {
+        "trust": "protected",
+        "target": "secret.txt",
+        "targetClass": "protected",
+        "influencedBy": "span_email_read",
+        "summary": "Protected file read requested",
+        "details": "File access was influenced by imported external email span."
+      }
+    }
+  ]
+}

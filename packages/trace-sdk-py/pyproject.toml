@@ -1,0 +1,18 @@
+[project]
+name = "agent-breach-replay"
+version = "0.1.0"
+description = "Security trace SDK for Agent Breach Replay"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.27.0"]
+license = "MIT"
+keywords = ["ai-agents", "security", "tracing", "observability"]
+authors = [{ name = "Agent Breach Replay" }]
+
+[project.urls]
+Homepage = "https://github.com/sidddduuuu/Codex-Ai-Hack"
+Repository = "https://github.com/sidddduuuu/Codex-Ai-Hack"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

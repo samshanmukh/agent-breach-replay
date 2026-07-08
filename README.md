@@ -389,3 +389,69 @@ with:
 - screenshots
 - release notes
 
+## Current Implementation
+
+The repo now includes the first working product spine:
+
+- Next.js Replay Studio
+- sample unsafe and guardrailed traces
+- shared security trace schema
+- TypeScript trace SDK scaffold
+- deterministic detector rules
+- OpenAI-ready report generation route with local fallback
+- Moss SDK-backed similar incident retrieval route with local fallback
+- OpenAI trace adapter scaffold
+- deployment, privacy, schema, and phase-status docs
+
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Verification
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+## Production Readiness
+
+The codebase now includes production-ready boundaries for the first release:
+
+- API-key protected trace ingestion at `POST /api/traces`
+- run listing and retrieval at `GET /api/runs` and `GET /api/runs/:runId`
+- health check at `GET /api/health`
+- Postgres migration in `migrations/001_initial.sql`
+- local memory fallback for development
+- TypeScript SDK `submit()` support
+- Python SDK skeleton
+- `.env.example` for Vercel/Neon/Supabase/OpenAI/Moss setup
+
+Production deployment still requires external setup:
+
+- create a managed Postgres database
+- apply `migrations/001_initial.sql`
+- set `DATABASE_URL` and `AGENT_BREACH_API_KEY`
+- configure OpenAI and Moss credentials
+- deploy the app on Vercel
+- publish SDK packages when names are finalized
+
+## Planning Artifacts
+
+- `architecture.html`
+- `goal.html`
+- `phases.html`
+- `docs/deployment.md`
+- `docs/privacy.md`
+- `docs/trace-schema.md`
+- `docs/phase-status.md`

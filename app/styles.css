@@ -1,0 +1,857 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700;800&display=swap");
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --glass: rgba(20, 23, 29, 0.74);
+  --glass-strong: rgba(31, 35, 43, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.7);
+  --ink: rgba(255, 255, 255, 0.94);
+  --muted: rgba(255, 255, 255, 0.58);
+  --faint: rgba(255, 255, 255, 0.32);
+  --surface: #101318;
+  --surface-2: #151922;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+code,
+pre,
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.studioShell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100vw;
+  height: 100vh;
+  padding: 14px;
+}
+
+.glassPanel,
+.topBar,
+.importModal,
+.authPanel {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(17, 20, 26, 0.9);
+}
+
+.logoMark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  font-weight: 800;
+}
+
+.brandBlock {
+  display: grid;
+  gap: 1px;
+}
+
+.brandBlock strong {
+  font-size: 14px;
+}
+
+.brandBlock span {
+  width: fit-content;
+}
+
+.brandBlock span,
+.incidentTitle span,
+.sidebarHeader span,
+.detailPanel > code,
+.policyCard span,
+.sidebarFooter span {
+  color: var(--muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.topSpacer {
+  flex: 1;
+}
+
+.modeToggle,
+.modalTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.modeToggle button,
+.modalTabs button,
+.glassButton,
+.sidebarHeader button,
+.timelineBar button,
+.sidebarFooter button,
+.modalHeader button {
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.modeToggle button,
+.modalTabs button {
+  min-height: 30px;
+  padding: 0 14px;
+  border: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modeToggle button.active,
+.modalTabs button.active,
+.playButton {
+  background: #fff;
+  color: #000;
+}
+
+.glassButton {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  gap: 12px;
+}
+
+.sidebar {
+  display: flex;
+  width: 264px;
+  min-width: 264px;
+  flex-direction: column;
+  padding: 14px;
+  background: rgba(14, 17, 22, 0.9);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.sidebarHeader button,
+.sidebarFooter button {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.incidentList {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.incidentCard {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.035);
+  text-align: left;
+  cursor: pointer;
+}
+
+.incidentCard.selected {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.incidentCard strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.incidentCard span,
+.incidentCard footer {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.incidentCard code {
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+.incidentCard footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.severity {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.severity.critical {
+  opacity: 1;
+}
+
+.severity.high {
+  opacity: 0.6;
+}
+
+.severity.medium {
+  opacity: 0.35;
+}
+
+.sidebarFooter {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.sidebarFooter code {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.centerPanel {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 16px;
+  background: rgba(14, 17, 22, 0.72);
+}
+
+.incidentTitle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+}
+
+.incidentTitle h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.incidentTitle code {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.graphViewport {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(7, 9, 12, 0.62);
+}
+
+.graphCanvas {
+  position: relative;
+  width: 1024px;
+  height: 306px;
+}
+
+.edgeLayer {
+  position: absolute;
+  inset: 0;
+  width: 1024px;
+  height: 306px;
+  pointer-events: none;
+}
+
+.graphEdge {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1.5;
+}
+
+.graphEdge.visited {
+  stroke: var(--edge);
+  stroke-width: 1.8;
+}
+
+.graphEdge.current {
+  stroke: var(--edge);
+  stroke-width: 2.6;
+  stroke-dasharray: 8 8;
+  animation: dash 1s linear infinite;
+}
+
+.isPlaying .graphEdge.current {
+  animation-duration: 0.4s;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.edgeDot {
+  fill: var(--edge);
+  filter: drop-shadow(0 0 8px var(--edge));
+}
+
+.graphNode {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  width: 176px;
+  height: 84px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 0.7;
+  text-align: left;
+  cursor: pointer;
+}
+
+.graphNode.visited {
+  opacity: 1;
+  color: #101010;
+}
+
+.graphNode.focused {
+  animation: pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.12);
+  }
+}
+
+.graphNode code {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.graphNode strong {
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.graphNode span {
+  font-size: 11px;
+  opacity: 0.74;
+}
+
+.graphNode.visited.tone-trusted {
+  border-color: #a9cdb6;
+  background: #f0f7f2;
+}
+
+.graphNode.visited.tone-trusted code {
+  color: #12805c;
+}
+
+.graphNode.visited.tone-untrusted {
+  border-color: #e3c07f;
+  background: #fdf6e9;
+}
+
+.graphNode.visited.tone-untrusted code {
+  color: #b54708;
+}
+
+.graphNode.visited.tone-agent {
+  border-color: #b3baf0;
+  background: #f1f2fd;
+}
+
+.graphNode.visited.tone-agent code {
+  color: #4653e8;
+}
+
+.graphNode.visited.tone-tool {
+  border-color: #b9c8d8;
+  background: #f2f6fa;
+}
+
+.graphNode.visited.tone-tool code {
+  color: #31648f;
+}
+
+.graphNode.visited.tone-protected {
+  border-color: #cdbcef;
+  background: #f6f2fd;
+}
+
+.graphNode.visited.tone-protected code {
+  color: #6f42d8;
+}
+
+.graphNode.visited.tone-external {
+  border-color: #eab793;
+  background: #fdf2ea;
+}
+
+.graphNode.visited.tone-external code {
+  color: #c4520e;
+}
+
+.graphNode.visited.tone-violation {
+  border-color: #e5a1a1;
+  background: #fdf0f0;
+}
+
+.graphNode.visited.tone-violation code {
+  color: #c22525;
+}
+
+.graphNode.visited.tone-safe {
+  border-color: #8ec7a5;
+  background: #ecf7f0;
+}
+
+.graphNode.visited.tone-safe code {
+  color: #0f7a52;
+}
+
+.cornerBadge {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #ecf7f0;
+  color: #0f7a52;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+}
+
+.cornerBadge.approval {
+  background: #fdf6e9;
+  color: #b54708;
+}
+
+.timelineBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding-top: 12px;
+}
+
+.progressTrack {
+  position: absolute;
+  left: 294px;
+  right: 366px;
+  bottom: 72px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  background: #fff;
+}
+
+.timelineBar button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.timelineBar code {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.stepChips {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.stepChips button {
+  flex: 0 0 auto;
+  max-width: 180px;
+  min-height: 34px;
+  overflow: hidden;
+  padding: 0 11px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--faint);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepChips button.past {
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.stepChips button.active {
+  color: #000;
+  background: #fff;
+}
+
+.detailPanel {
+  display: flex;
+  width: 340px;
+  min-width: 340px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(14, 17, 22, 0.9);
+}
+
+.detailPanel h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.detailPanel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.policyCard {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.policyCard strong {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+}
+
+.policyCard.blocked,
+.policyCard.contained {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.labelRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.labelRow code {
+  max-width: 100%;
+  padding: 5px 7px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 9.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailPanel pre,
+.modalBody pre {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(0, 0, 0, 0.34);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.detailPanel footer {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  z-index: 20;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(10px);
+}
+
+.importModal {
+  width: min(720px, 100%);
+  padding: 18px;
+  background: rgba(30, 30, 34, 0.75);
+  backdrop-filter: blur(28px);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modalHeader button {
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.modalTabs {
+  width: fit-content;
+  margin: 16px 0;
+}
+
+.modalBody {
+  display: grid;
+  gap: 12px;
+}
+
+.modalBody p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dropzone {
+  min-height: 132px;
+  border: 1px dashed rgba(255, 255, 255, 0.32);
+  border-radius: 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.authShell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 36%),
+    var(--bg);
+  background-size: 48px 48px, 48px 48px, auto, auto;
+}
+
+.authPanel {
+  width: min(440px, 100%);
+  padding: 24px;
+  background: rgba(18, 21, 27, 0.92);
+}
+
+.authPanel h1 {
+  margin: 10px 0 0;
+  font-size: 2rem;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.authPanel p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.authForm {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.authForm label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.authForm input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.authForm button {
+  min-height: 42px;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  color: #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.secondaryAuth {
+  padding-top: 18px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.secondaryAuth button {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.authError {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.authMessage {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+@media (max-width: 1180px) {
+  body {
+    overflow: auto;
+  }
+
+  .studioShell {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .workspace {
+    flex-direction: column;
+  }
+
+  .sidebar,
+  .detailPanel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .incidentList {
+    max-height: 220px;
+  }
+
+  .progressTrack {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .topBar,
+  .timelineBar,
+  .incidentTitle {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .modeToggle {
+    width: 100%;
+  }
+
+  .modeToggle button {
+    flex: 1;
+  }
+}

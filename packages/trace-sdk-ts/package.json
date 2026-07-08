@@ -1,0 +1,26 @@
+{
+  "name": "@agent-breach/replay",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for capturing Agent Breach Replay security traces.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup index.ts --format esm,cjs --dts --clean --tsconfig tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["ai-agents", "security", "tracing", "observability", "prompt-injection"],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@agent-breach/trace-schema": "0.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3"
+  }
+}

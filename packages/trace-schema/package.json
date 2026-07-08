@@ -1,0 +1,23 @@
+{
+  "name": "@agent-breach/trace-schema",
+  "version": "0.1.0",
+  "description": "Shared security trace schema for Agent Breach Replay.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup index.ts --format esm,cjs --dts --clean --tsconfig tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["ai-agents", "security", "tracing", "schema"],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3"
+  }
+}
