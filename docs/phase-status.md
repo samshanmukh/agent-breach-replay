@@ -7,6 +7,7 @@
 - Phase 3: OpenAI-ready report generation hook with local fallback
 - Phase 4: Moss SDK-backed retrieval with local similar incident fallback
 - Phase 5: OpenAI trace adapter scaffold and import route
+- Phase 5b: Local OpenAI Agents instrumentation package with OpenInference-compatible span semantics (TypeScript + Python)
 - Phase 6: Release documentation and verification commands
 - Production layer: Postgres migration, API-key protected ingestion routes,
   run retrieval routes, health check route, Supabase auth-protected studio,
@@ -20,6 +21,6 @@
 - Real OpenAI report evaluation and prompt hardening
 - Published npm package
 - Published Python SDK
-- Full OpenAI Agents SDK integration example
+- Full OpenAI Agents SDK live runtime example with optional `@openai/agents` peer dependency
 - Deployment to Vercel
 - Retention controls and audit logs

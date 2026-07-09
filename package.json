@@ -4,17 +4,19 @@
   "private": true,
   "workspaces": [
     "packages/trace-schema",
-    "packages/trace-sdk-ts"
+    "packages/trace-sdk-ts",
+    "packages/instrumentation-openai-agents"
   ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:sdk": "npm --prefix packages/trace-schema run build && npm --prefix packages/trace-sdk-ts run build",
+    "build:sdk": "npm --prefix packages/trace-schema run build && npm --prefix packages/trace-sdk-ts run build && npm --prefix packages/instrumentation-openai-agents run build",
     "db:migrate": "node --import tsx scripts/migrate.ts",
     "check:live": "node --import tsx scripts/check-live-services.ts",
-    "test": "node --import tsx scripts/test-detectors.ts && node --import tsx scripts/test-adapters.ts && node --import tsx scripts/test-production.ts && node --import tsx scripts/test-sdk.ts",
+    "test": "node --import tsx scripts/test-detectors.ts && node --import tsx scripts/test-adapters.ts && node --import tsx scripts/test-instrumentation.ts && node --import tsx scripts/test-production.ts && node --import tsx scripts/test-sdk.ts",
     "test:python-sdk": "PYTHONPATH=packages/trace-sdk-py python3 scripts/test-python-sdk.py",
-    "validate:sdk": "npm run build:sdk && npm_config_cache=/tmp/agent-breach-npm-cache npm pack --workspace @agent-breach/trace-schema --dry-run && npm_config_cache=/tmp/agent-breach-npm-cache npm pack --workspace @agent-breach/replay --dry-run && npm run test:python-sdk",
+    "test:python-instrumentation": "PYTHONPATH=packages/trace-sdk-py python3 scripts/test-python-instrumentation.py",
+    "validate:sdk": "npm run build:sdk && npm_config_cache=/tmp/agent-breach-npm-cache npm pack --workspace @agent-breach/trace-schema --dry-run && npm_config_cache=/tmp/agent-breach-npm-cache npm pack --workspace @agent-breach/replay --dry-run && npm_config_cache=/tmp/agent-breach-npm-cache npm pack --workspace @agent-breach/instrumentation-openai-agents --dry-run && npm run test:python-sdk && npm run test:python-instrumentation",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

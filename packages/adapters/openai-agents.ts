@@ -4,23 +4,18 @@ import type {
   SecurityTrace,
   TrustLevel,
 } from "../trace-schema";
-
-export type OpenAITraceSpanLike = {
-  id: string;
-  type?: string;
-  name?: string;
-  started_at?: string;
-  input?: unknown;
-  output?: unknown;
-  metadata?: Record<string, unknown>;
-};
-
-export type OpenAITraceLike = {
-  id: string;
-  workflow_name?: string;
-  created_at?: string;
-  spans: OpenAITraceSpanLike[];
-};
+import {
+  actorFromSpan,
+  completedSpansToOpenAITrace,
+  decisionFromSpan,
+  enrichSpanMetadata,
+  inferInfluenceEdges,
+  spanId,
+  traceId,
+  type OpenAITraceLike,
+  type OpenAITraceSpanLike,
+} from "./openai-span-mappers";
+import type { CompletedSpan } from "../instrumentation-openai-agents/types";
 
 function stringMeta(
   metadata: Record<string, unknown> | undefined,
@@ -31,7 +26,8 @@ function stringMeta(
 }
 
 function trustFromSpan(span: OpenAITraceSpanLike): TrustLevel {
-  const explicit = stringMeta(span.metadata, "trust");
+  const metadata = enrichSpanMetadata(span);
+  const explicit = stringMeta(metadata, "trust");
   if (
     explicit === "trusted" ||
     explicit === "untrusted" ||
@@ -41,9 +37,20 @@ function trustFromSpan(span: OpenAITraceSpanLike): TrustLevel {
   ) {
     return explicit;
   }
-
-  if (span.type?.includes("tool")) return "neutral";
   return "neutral";
+}
+
+function influencedByForSpan(
+  span: OpenAITraceSpanLike,
+  edges: Map<string, string[]>,
+) {
+  const metadata = enrichSpanMetadata(span);
+  const explicit = stringMeta(metadata, "influencedBy")
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (explicit && explicit.length > 0) return explicit;
+  return edges.get(spanId(span)) ?? [];
 }
 
 export function normalizeOpenAITrace(
@@ -55,46 +62,42 @@ export function normalizeOpenAITrace(
     riskSummary?: string;
   },
 ): SecurityTrace {
+  const edges = inferInfluenceEdges(trace.spans);
+  const run = traceId(trace);
+
   const events: SecurityEvent[] = trace.spans.map((span, index) => {
+    const metadata = enrichSpanMetadata(span);
     const trust = trustFromSpan(span);
-    const toolName = stringMeta(span.metadata, "toolName") ?? span.name;
-    const targetClass = stringMeta(span.metadata, "targetClass") as
-      | TrustLevel
-      | undefined;
-    const influencedBy = stringMeta(span.metadata, "influencedBy")
-      ?.split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
+    const toolName = stringMeta(metadata, "toolName") ?? span.span_data?.name ?? span.name;
+    const targetClass = stringMeta(metadata, "targetClass") as TrustLevel | undefined;
 
     return {
-      id: span.id,
-      runId: trace.id,
+      id: spanId(span) || `span_${index}`,
+      runId: run,
       timestamp:
         span.started_at ??
         new Date(Date.UTC(2026, 6, 8, 12, index, 0)).toISOString(),
-      title: span.name ?? span.type ?? "OpenAI trace span",
-      actor: span.type?.includes("tool") ? "tool" : "agent",
+      title: span.span_data?.name ?? span.name ?? span.span_data?.type ?? "OpenAI trace span",
+      actor: actorFromSpan(span),
       trust,
       summary:
-        stringMeta(span.metadata, "summary") ??
+        stringMeta(metadata, "summary") ??
         "Imported OpenAI trace span with security metadata where available.",
       details:
-        stringMeta(span.metadata, "details") ??
+        stringMeta(metadata, "details") ??
         "Unknown fields are kept explicit so missing trust labels are visible.",
       toolName,
-      target: stringMeta(span.metadata, "target"),
+      target: stringMeta(metadata, "target"),
       targetClass,
       destinationClass: targetClass,
-      influencedBy,
-      decision:
-        (stringMeta(span.metadata, "decision") as SecurityEvent["decision"]) ??
-        "observed",
+      influencedBy: influencedByForSpan(span, edges),
+      decision: decisionFromSpan({ ...span, metadata }),
     };
   });
 
   return {
     schemaVersion: "0.1",
-    runId: trace.id,
+    runId: run,
     projectId: options.projectId,
     agentName: trace.workflow_name ?? "OpenAI Agent",
     scenarioName: trace.workflow_name ?? "OpenAI Agent Trace",
@@ -107,3 +110,29 @@ export function normalizeOpenAITrace(
     events,
   };
 }
+
+export function normalizeInstrumentedSpans(
+  input: {
+    traceId: string;
+    workflowName: string;
+    spans: CompletedSpan[];
+    createdAt?: string;
+  },
+  options: {
+    projectId: string;
+    userTask: string;
+    captureMode?: CaptureMode;
+    riskSummary?: string;
+  },
+) {
+  return normalizeOpenAITrace(
+    completedSpansToOpenAITrace({
+      traceId: input.traceId,
+      workflowName: input.workflowName,
+      spans: input.spans,
+    }),
+    options,
+  );
+}
+
+export type { OpenAITraceLike, OpenAITraceSpanLike };
