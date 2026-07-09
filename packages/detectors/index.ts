@@ -131,6 +131,39 @@ export function detectSecurityFindings(trace: SecurityTrace): SecurityFinding[] 
     }
   }
 
+  const destructiveActions = trace.events.filter(
+    (event) =>
+      event.actor === "tool" &&
+      Boolean(
+        event.violation === "destructive_write" ||
+          event.toolName?.match(
+            /(?:^|[._-])(delete|remove|destroy|purge|overwrite|truncate)(?:$|[._-])/i,
+          ),
+      ),
+  );
+
+  for (const destructiveAction of destructiveActions) {
+    const influencedByUntrusted = influenceChainHas(
+      destructiveAction,
+      eventsById,
+      (event) => event.trust === "untrusted" || event.targetClass === "untrusted",
+    );
+
+    if (!influencedByUntrusted) continue;
+
+    findings.push(
+      finding(
+        "destructive_write",
+        destructiveAction.influencedBy
+          ? [...destructiveAction.influencedBy, destructiveAction.id]
+          : [destructiveAction.id],
+        destructiveAction.decision === "blocked" ? "blocked" : "triggered",
+        "Require trusted authority and explicit approval before destructive writes execute.",
+        "critical",
+      ),
+    );
+  }
+
   const blockedPolicyEvents = trace.events.filter(
     (event) => event.actor === "policy" && event.decision === "blocked",
   );
