@@ -4,88 +4,86 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import "./landing.css";
 
-type TabId = "overview" | "tracing" | "prevention";
+type TabId = "full" | "tracing" | "prevention";
+type Badge = "purple" | "orange" | "green" | "red" | "blue";
 
-type TreeNode = {
+type StoryStep = {
   id: string;
   step: string;
   title: string;
   description: string;
-  badge: "purple" | "orange" | "green" | "red" | "blue";
+  badge: Badge;
   chips: string[];
   code?: string;
-  children?: TreeNode[];
+  children?: StoryStep[];
 };
 
-const tracingTree: TreeNode[] = [
+const tracingSteps: StoryStep[] = [
   {
     id: "hook",
     step: "01",
     title: "Instrumentation hook",
     description:
-      "Register a local TracingProcessor with the OpenAI Agents SDK. Exclusive mode replaces SDK processors; additive mode keeps native tracing alongside ours.",
+      "Register the local processor with the OpenAI Agents SDK. Exclusive mode replaces SDK processors. Additive mode keeps native tracing alongside ours.",
     badge: "purple",
     chips: ["OpenAIAgentsInstrumentation", "exclusiveProcessor", "manuallyInstrument"],
-    code: `const instrumentation = new OpenAIAgentsInstrumentation({
-  exclusiveProcessor: true,
-});
-instrumentation.manuallyInstrument(agents);`,
+    code: `instrumentation.manuallyInstrument(agents);`,
     children: [
       {
         id: "processor",
         step: "02",
         title: "AgentBreachTracingProcessor",
         description:
-          "Implements the SDK tracing callbacks and converts each trace/span event into OpenInference-compatible local spans.",
+          "Listens to onTraceStart, onTraceEnd, onSpanStart, and onSpanEnd. Every SDK event becomes an OpenInference-compatible local span.",
         badge: "purple",
-        chips: ["onTraceStart", "onSpanStart", "onSpanEnd", "MemorySpanExporter"],
+        chips: ["MemorySpanExporter", "TracingProcessor", "OpenInference semantics"],
       },
     ],
   },
   {
-    id: "trace-root",
+    id: "root",
     step: "03",
     title: "Trace root span",
     description:
-      "Every agent workflow opens a root AGENT span named after the workflow. This becomes the parent for all child spans in the run.",
+      "Each workflow opens a root AGENT span named after the run. This becomes the parent container for every child span in the trace.",
     badge: "orange",
-    chips: ["openinference.span.kind=AGENT", "llm.system=openai", "trace.name"],
+    chips: ["openinference.span.kind=AGENT", "llm.system=openai"],
     children: [
       {
-        id: "span-tree",
+        id: "hierarchy",
         step: "04",
         title: "Span hierarchy",
         description:
-          "Child spans resolve parents through SDK parent_id links. The processor preserves the tree so influence chains can be reconstructed later.",
+          "Child spans resolve parents through SDK parent_id links so influence chains can be reconstructed during security replay.",
         badge: "orange",
         chips: ["parent_id", "span_id", "trace_id", "started_at", "ended_at"],
       },
     ],
   },
   {
-    id: "semantics",
+    id: "mapping",
     step: "05",
     title: "Semantic span mapping",
     description:
-      "Each SDK span type is mapped to an OpenInference span kind and enriched with the right attributes at span end.",
+      "SDK span types are mapped to OpenInference kinds and enriched with the right attributes when each span ends.",
     badge: "green",
     chips: ["AGENT", "LLM", "TOOL", "GUARDRAIL", "CHAIN", "AUDIO", "USER"],
     children: [
       {
-        id: "generation",
+        id: "llm",
         step: "06",
-        title: "Generation & response spans",
+        title: "Generation and response spans",
         description:
           "LLM spans capture model name, invocation parameters, input/output messages, token counts, and tool schemas.",
         badge: "green",
         chips: ["llm.model_name", "llm.input_messages", "llm.token_count.prompt"],
       },
       {
-        id: "function",
+        id: "tools",
         step: "07",
-        title: "Function & handoff spans",
+        title: "Function and handoff spans",
         description:
-          "Tool spans record function name, JSON arguments, and outputs. Handoffs link destination agents back to source agents.",
+          "Tool spans record function arguments and outputs. Handoffs link destination agents back to source agents in the graph.",
         badge: "green",
         chips: ["tool.name", "graph.node.parent_id", "handoff_to_*"],
       },
@@ -94,27 +92,27 @@ instrumentation.manuallyInstrument(agents);`,
         step: "08",
         title: "Guardrail spans",
         description:
-          "Guardrail events become GUARDRAIL spans with tool.name and guardrail.triggered so policy blocks are visible in replay.",
+          "Guardrail events become GUARDRAIL spans with guardrail.triggered so blocked actions are visible in replay.",
         badge: "red",
         chips: ["guardrail.triggered", "policy actor", "blocked decision"],
       },
     ],
   },
   {
-    id: "lifted-io",
+    id: "lifted",
     step: "09",
-    title: "Lifted input/output",
+    title: "Lifted input and output",
     description:
-      "LLM child input and final output are bubbled to enclosing AGENT spans and the trace root, matching upstream OpenInference behavior.",
+      "LLM child input and final output bubble up to enclosing AGENT spans and the trace root, matching upstream OpenInference behavior.",
     badge: "blue",
     chips: ["input.value", "output.value", "first input wins", "last output wins"],
   },
   {
-    id: "privacy",
+    id: "masking",
     step: "10",
     title: "TraceConfig masking",
     description:
-      "Sensitive values can be redacted before export using TraceConfig and OPENINFERENCE_* environment variables.",
+      "Sensitive prompts, tool payloads, and audio can be redacted before export through TraceConfig and OPENINFERENCE_* environment variables.",
     badge: "blue",
     chips: ["hideInputs", "hideOutputs", "hideInputAudio", "__REDACTED__"],
   },
@@ -123,15 +121,15 @@ instrumentation.manuallyInstrument(agents);`,
     step: "11",
     title: "Realtime audio tracing",
     description:
-      "Voice turns produce AUDIO parent spans with USER and LLM children, optional WAV data URIs, transcripts, and tool calls per turn.",
+      "Voice turns produce AUDIO parent spans with USER and LLM children, optional WAV data URIs, transcripts, and per-turn tool calls.",
     badge: "purple",
-    chips: ["conversation.turn", "PCM16→WAV", "time_to_first_token_ms"],
+    chips: ["conversation.turn", "PCM16 to WAV", "time_to_first_token_ms"],
   },
 ];
 
-const preventionTree: TreeNode[] = [
+const preventionSteps: StoryStep[] = [
   {
-    id: "export",
+    id: "normalize",
     step: "12",
     title: "Normalize to security trace",
     description:
@@ -140,7 +138,7 @@ const preventionTree: TreeNode[] = [
     chips: ["normalizeInstrumentedSpans", "influencedBy", "targetClass"],
     children: [
       {
-        id: "enrichment",
+        id: "enrich",
         step: "13",
         title: "Security enrichment",
         description:
@@ -151,11 +149,11 @@ const preventionTree: TreeNode[] = [
     ],
   },
   {
-    id: "import",
+    id: "persist",
     step: "14",
-    title: "Import & persist",
+    title: "Import and persist",
     description:
-      "POST /api/import/openai accepts SDK exports or instrumented span bundles and persists them into the replay store.",
+      "POST /api/import/openai accepts SDK exports or instrumented span bundles and stores them in the replay database.",
     badge: "green",
     chips: ["POST /api/import/openai", "persist=true", "saveTrace"],
     children: [
@@ -164,16 +162,16 @@ const preventionTree: TreeNode[] = [
         step: "15",
         title: "Deterministic detectors",
         description:
-          "Security predicates walk influence chains to flag exfiltration, untrusted-to-action, confused deputy, and related failure modes.",
+          "Security predicates walk influence chains to flag exfiltration, untrusted-to-action, confused deputy, and destructive write paths.",
         badge: "red",
         chips: ["exfiltration", "untrusted_to_action", "confused_deputy"],
       },
       {
         id: "replay",
         step: "16",
-        title: "Replay studio & prevention story",
+        title: "Replay studio and prevention",
         description:
-          "The studio reconstructs source → influence → tool → boundary → violation so teams can see what crossed a security line and what would have blocked it.",
+          "The studio reconstructs source to influence to tool to boundary to violation so teams can see what crossed a security line and what would have blocked it.",
         badge: "green",
         chips: ["timeline replay", "policy comparison", "incident report"],
       },
@@ -181,238 +179,319 @@ const preventionTree: TreeNode[] = [
   },
 ];
 
-const metrics = [
-  { label: "Span kinds covered", value: "7", note: "AGENT · LLM · TOOL · GUARDRAIL · CHAIN · AUDIO · USER" },
-  { label: "Processor hooks", value: "4", note: "trace start/end · span start/end" },
-  { label: "Privacy controls", value: "10+", note: "TraceConfig + OPENINFERENCE_* env vars" },
-  { label: "Security predicates", value: "4", note: "exfiltration · untrusted-to-action · deputy · destructive write" },
+const runtimeFlow = [
+  "OpenAI Agents SDK emits trace and span lifecycle events.",
+  "Local processor maps each event to OpenInference span kinds and attributes.",
+  "Lifted I/O, handoff links, and guardrail results are attached to spans.",
+  "TraceConfig masks sensitive audio, prompts, or tool payloads.",
+  "Adapter normalizes spans into security events with influence edges.",
+  "Detectors evaluate risky chains and the replay studio shows prevention insight.",
+];
+
+const stats = [
+  { label: "Span kinds", value: "7", detail: "AGENT, LLM, TOOL, GUARDRAIL, CHAIN, AUDIO, USER" },
+  { label: "Processor hooks", value: "4", detail: "trace start/end and span start/end" },
+  { label: "Privacy controls", value: "10+", detail: "TraceConfig and OPENINFERENCE env vars" },
+  { label: "Security predicates", value: "4", detail: "exfiltration, untrusted-to-action, deputy, destructive write" },
 ];
 
 const legend = [
-  { label: "Instrumentation layer", color: "#8b5cf6" },
-  { label: "Trace capture", color: "#f97316" },
-  { label: "Semantic enrichment", color: "#22c55e" },
-  { label: "Policy & prevention", color: "#ef4444" },
-  { label: "Privacy controls", color: "#3b82f6" },
+  { label: "Instrumentation", color: "#7c3aed" },
+  { label: "Trace capture", color: "#ea580c" },
+  { label: "Semantic enrichment", color: "#16a34a" },
+  { label: "Policy and prevention", color: "#dc2626" },
+  { label: "Privacy controls", color: "#2563eb" },
 ];
 
-function TreeBranch({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
+function StoryTreeNode({
+  node,
+  isChild = false,
+  isLast = false,
+}: {
+  node: StoryStep;
+  isChild?: boolean;
+  isLast?: boolean;
+}) {
   return (
-    <div className={depth === 0 ? "landingTreeRoot" : "landingTreeNode"}>
-      <div className="landingTreeItem">
-        <div className="landingTreeTop">
-          <div>
-            <strong>{node.title}</strong>
-            <p>{node.description}</p>
-            <div className="landingChipRow">
-              {node.chips.map((chip) => (
-                <span className="landingChip" key={chip}>
-                  {chip}
-                </span>
-              ))}
-            </div>
-            {node.code ? <pre className="landingCodeBlock">{node.code}</pre> : null}
-          </div>
-          <span className={`landingStepBadge ${node.badge}`}>Step {node.step}</span>
-        </div>
+    <div className={`landingTreeBranch${isChild ? " isChild" : ""}`}>
+      <div className="landingTreeRail">
+        <span className={`landingTreeDot ${node.badge}`} />
+        {!isLast ? <span className="landingTreeLine" /> : null}
       </div>
-      {node.children?.map((child) => (
-        <TreeBranch key={child.id} node={child} depth={depth + 1} />
-      ))}
+      <div className="landingTreeNode">
+        <article className="landingTreeCard">
+          <div className="landingTreeCardTop">
+            <div>
+              <h4>{node.title}</h4>
+              <p>{node.description}</p>
+            </div>
+            <span className={`landingStepPill ${node.badge}`}>Step {node.step}</span>
+          </div>
+          <div className="landingChipList">
+            {node.chips.map((chip) => (
+              <span className="landingChip" key={chip}>
+                {chip}
+              </span>
+            ))}
+          </div>
+          {node.code ? <pre className="landingCode">{node.code}</pre> : null}
+        </article>
+        {node.children?.map((child, index) => (
+          <StoryTreeNode
+            key={child.id}
+            node={child}
+            isChild
+            isLast={index === (node.children?.length ?? 0) - 1}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-export default function LandingClient() {
-  const [tab, setTab] = useState<TabId>("overview");
+function StoryPhase({
+  label,
+  tone,
+  steps,
+}: {
+  label: string;
+  tone: "tracing" | "prevention";
+  steps: StoryStep[];
+}) {
+  return (
+    <section className="landingPhase">
+      <div className={`landingPhaseLabel ${tone}`}>{label}</div>
+      <div className="landingTree">
+        {steps.map((step, index) => (
+          <StoryTreeNode
+            key={step.id}
+            node={step}
+            isLast={index === steps.length - 1 && !step.children?.length}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
-  const activeTree = useMemo(() => {
-    if (tab === "tracing") return tracingTree;
-    if (tab === "prevention") return preventionTree;
-    return [...tracingTree.slice(0, 3), preventionTree[0], preventionTree[1]];
+export default function LandingClient() {
+  const [tab, setTab] = useState<TabId>("full");
+
+  const phases = useMemo(() => {
+    if (tab === "tracing") {
+      return [{ label: "Phase 1 · Tracing and capture", tone: "tracing" as const, steps: tracingSteps }];
+    }
+    if (tab === "prevention") {
+      return [{ label: "Phase 2 · Prevention and replay", tone: "prevention" as const, steps: preventionSteps }];
+    }
+    return [
+      { label: "Phase 1 · Tracing and capture", tone: "tracing" as const, steps: tracingSteps },
+      { label: "Phase 2 · Prevention and replay", tone: "prevention" as const, steps: preventionSteps },
+    ];
   }, [tab]);
 
   return (
-    <div className="landingBody">
-      <div className="landingShell">
-        <aside className="landingSidebar">
-          <div className="landingProfile">
-            <div className="landingAvatar">AB</div>
+    <div className="landingPage">
+      <header className="landingNav">
+        <div className="landingContainer landingNavInner">
+          <div className="landingBrand">
+            <div className="landingBrandMark">AB</div>
             <div>
               <strong>Agent Breach Replay</strong>
-              <span>Security observability</span>
+              <span>Security observability platform</span>
             </div>
           </div>
-
-          <div className="landingNavSection">
-            <div className="landingNavLabel">Product</div>
-            <span className="landingNavItemActive">
-              <span className="landingNavDot" />
-              Overview
-            </span>
-            <a className="landingNavItem" href="#tracing-flow">
-              <span className="landingNavDot" />
-              Tracing flow
-            </a>
-            <a className="landingNavItem" href="#prevention">
-              <span className="landingNavDot" />
-              Prevention
-            </a>
-          </div>
-
-          <div className="landingNavSection">
-            <div className="landingNavLabel">Workspace</div>
-            <Link className="landingNavItem" href="/studio">
-              Replay studio
-            </Link>
-            <Link className="landingNavItem" href="/login">
+          <nav className="landingNavLinks">
+            <a href="#story">How it works</a>
+            <a href="#tracing">Tracing</a>
+            <a href="#prevention">Prevention</a>
+          </nav>
+          <div className="landingNavActions">
+            <Link className="landingBtn" href="/login">
               Sign in
             </Link>
+            <Link className="landingBtnPrimary" href="/studio">
+              Open replay studio
+            </Link>
           </div>
+        </div>
+      </header>
 
-          <div className="landingSidebarFooter">
-            <span className="landingNavItem">Local instrumentation package</span>
-            <span className="landingNavItem">OpenInference-compatible semantics</span>
-          </div>
-        </aside>
-
-        <main className="landingMain">
-          <header className="landingHeader">
+      <main>
+        <section className="landingHero">
+          <div className="landingContainer landingHeroGrid">
             <div>
-              <h1>Local OpenAI Agents instrumentation</h1>
-              <p>
-                A step-by-step observability story for how Agent Breach Replay
-                captures agent runs, enriches them with security semantics, and
-                turns risky tool paths into replayable prevention insight.
+              <div className="landingEyebrow">Built locally · OpenInference-compatible semantics</div>
+              <h1>See how agent breaches happen. Stop them before they spread.</h1>
+              <p className="landingHeroLead">
+                Agent Breach Replay is a security observability layer for tool-using AI agents.
+                Our locally built instrumentation captures every span, enriches it with trust and
+                policy semantics, and turns risky tool paths into replayable prevention insight.
               </p>
+              <div className="landingHeroActions">
+                <Link className="landingBtnPrimary" href="/studio">
+                  Launch replay studio
+                </Link>
+                <a className="landingBtn" href="#story">
+                  View instrumentation story
+                </a>
+              </div>
             </div>
-            <div className="landingHeaderActions">
-              <a className="landingButton" href="#tracing-flow">
-                Explore tracing flow
-              </a>
-              <Link className="landingButtonPrimary" href="/studio">
-                Open replay studio
-              </Link>
-            </div>
-          </header>
 
-          <div className="landingTabs">
-            <button
-              type="button"
-              className={tab === "overview" ? "landingTabActive" : "landingTab"}
-              onClick={() => setTab("overview")}
-            >
-              Overview
-            </button>
-            <button
-              type="button"
-              className={tab === "tracing" ? "landingTabActive" : "landingTab"}
-              onClick={() => setTab("tracing")}
-            >
-              Tracing flow
-            </button>
-            <button
-              type="button"
-              className={tab === "prevention" ? "landingTabActive" : "landingTab"}
-              onClick={() => setTab("prevention")}
-            >
-              Prevention
-            </button>
+            <aside className="landingHeroCard">
+              <h3>What this landing page explains</h3>
+              <p>
+                The full step-by-step story of how our local
+                openinference-style OpenAI Agents instrumentation captures tracing data and
+                feeds prevention workflows.
+              </p>
+              <div className="landingMiniFlow">
+                {[
+                  ["1", "Hook the OpenAI Agents SDK"],
+                  ["2", "Capture spans with OpenInference semantics"],
+                  ["3", "Normalize into security traces"],
+                  ["4", "Detect risky chains and replay incidents"],
+                ].map(([index, text]) => (
+                  <div className="landingMiniFlowRow" key={index}>
+                    <span className="landingMiniFlowIndex">{index}</span>
+                    <div>
+                      <strong>{text}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
+        </section>
 
-          <section className="landingMetrics">
-            {metrics.map((metric) => (
-              <article className="landingMetricCard" key={metric.label}>
-                <span>{metric.label}</span>
-                <strong>{metric.value}</strong>
-                <em>{metric.note}</em>
-              </article>
-            ))}
-          </section>
+        <section className="landingContainer landingStats">
+          {stats.map((stat) => (
+            <article className="landingStatCard" key={stat.label}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+              <p>{stat.detail}</p>
+            </article>
+          ))}
+        </section>
 
-          <section className="landingGrid" id="tracing-flow">
-            <article className="landingPanel">
-              <div className="landingPanelHeader">
-                <div>
-                  <h2>
+        <section className="landingSection" id="story">
+          <div className="landingContainer">
+            <div className="landingSectionHeader">
+              <div>
+                <h2 id="tracing">Instrumentation story tree</h2>
+                <p>
+                  Step-by-step breakdown of how the locally built
+                  openinference-instrumentation-openai-agents equivalent captures tracing,
+                  enriches security semantics, and powers prevention.
+                </p>
+              </div>
+              <div className="landingTabs">
+                <button
+                  type="button"
+                  className={tab === "full" ? "landingTabActive" : "landingTab"}
+                  onClick={() => setTab("full")}
+                >
+                  Full story
+                </button>
+                <button
+                  type="button"
+                  className={tab === "tracing" ? "landingTabActive" : "landingTab"}
+                  onClick={() => setTab("tracing")}
+                >
+                  Tracing
+                </button>
+                <button
+                  type="button"
+                  className={tab === "prevention" ? "landingTabActive" : "landingTab"}
+                  onClick={() => setTab("prevention")}
+                >
+                  Prevention
+                </button>
+              </div>
+            </div>
+
+            <div className="landingStoryLayout">
+              <article className="landingStoryPanel">
+                <div className="landingStoryPanelHeader">
+                  <h3>
                     {tab === "tracing"
-                      ? "Tracing pipeline tree"
+                      ? "Tracing pipeline"
                       : tab === "prevention"
-                        ? "Prevention pipeline tree"
-                        : "End-to-end instrumentation story"}
-                  </h2>
+                        ? "Prevention pipeline"
+                        : "End-to-end tracing and prevention pipeline"}
+                  </h3>
                   <p>
-                    How the locally built openinference-style package observes
-                    agent runs from SDK hook to replay-ready security trace.
+                    From SDK hook to replay-ready incident. Each step maps to code in
+                    @agent-breach/instrumentation-openai-agents and the replay adapter layer.
                   </p>
                 </div>
-              </div>
-              <div className="landingPanelBody">
-                <div className="landingStoryTree">
-                  {activeTree.map((node) => (
-                    <TreeBranch key={node.id} node={node} />
+                <div className="landingStoryPanelBody">
+                  {phases.map((phase) => (
+                    <StoryPhase
+                      key={phase.label}
+                      label={phase.label}
+                      tone={phase.tone}
+                      steps={phase.steps}
+                    />
                   ))}
                 </div>
-              </div>
-            </article>
+              </article>
 
-            <div className="landingFlowCard" id="prevention">
-              <article className="landingPanel">
-                <div className="landingPanelHeader">
-                  <div>
-                    <h2>What happens at runtime</h2>
-                    <p>Condensed execution order for one agent workflow.</p>
-                  </div>
-                </div>
-                <div className="landingPanelBody">
-                  {[
-                    "SDK emits trace and span lifecycle events.",
-                    "Processor maps each event to OpenInference span kinds and attributes.",
-                    "Lifted I/O, handoff links, and guardrail results are attached.",
-                    "TraceConfig masks sensitive audio, prompts, or tool payloads.",
-                    "Adapter normalizes spans into security events with influence edges.",
-                    "Detectors evaluate risky chains and the studio replays the incident.",
-                  ].map((text, index) => (
-                    <div className="landingFlowStep" key={text}>
-                      <span className="landingFlowIndex">{index + 1}</span>
-                      <div>
-                        <strong>{text}</strong>
+              <aside className="landingAside" id="prevention">
+                <article className="landingAsideCard">
+                  <h4>Runtime execution order</h4>
+                  <p>What happens during one agent workflow run.</p>
+                  <div className="landingRuntimeList">
+                    {runtimeFlow.map((item, index) => (
+                      <div className="landingRuntimeItem" key={item}>
+                        <span>{index + 1}</span>
+                        <strong>{item}</strong>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="landingPanel">
-                <div className="landingPanelHeader">
-                  <div>
-                    <h2>Layer legend</h2>
-                    <p>Color coding used across the tracing story.</p>
+                    ))}
                   </div>
-                </div>
-                <div className="landingPanelBody landingLegend">
-                  {legend.map((item) => (
-                    <div className="landingLegendItem" key={item.label}>
-                      <span>{item.label}</span>
-                      <span
-                        className="landingLegendDot"
-                        style={{ background: item.color }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </article>
+                </article>
 
-              <div className="landingHeroNote">
-                Built locally in <code>@agent-breach/instrumentation-openai-agents</code>{" "}
-                with no dependency on Arize OpenInference packages. The same feature
-                surface—processor bridge, semantic conventions, masking, realtime audio
-                scaffold, and replay normalization—is owned inside this repository.
-              </div>
+                <article className="landingAsideCard">
+                  <h4>Layer legend</h4>
+                  <p>Color coding used across the story tree.</p>
+                  <div className="landingLegendList">
+                    {legend.map((item) => (
+                      <div className="landingLegendRow" key={item.label}>
+                        <span>{item.label}</span>
+                        <span
+                          className="landingLegendSwatch"
+                          style={{ background: item.color }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </article>
+
+                <article className="landingAsideCard">
+                  <h4>Built in this repository</h4>
+                  <p>
+                    No dependency on Arize OpenInference packages. The processor bridge, semantic
+                    conventions, masking, realtime audio scaffold, and replay normalization are
+                    owned locally inside this codebase.
+                  </p>
+                  <Link className="landingBtnPrimary" href="/studio">
+                    Open replay studio
+                  </Link>
+                </article>
+              </aside>
             </div>
-          </section>
-        </main>
-      </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="landingFooter">
+        <div className="landingContainer landingFooterInner">
+          <span>Agent Breach Replay · Security observability for tool-using AI agents</span>
+          <Link className="landingBtn" href="/login">
+            Sign in
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
