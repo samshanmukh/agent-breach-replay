@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import MarketingNav from "@/app/marketing-nav";
 import { signInWithEmail, signUpWithEmail } from "@/app/login/actions";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { createClient } from "@/utils/supabase/server";
 import "../landing.css";
 
@@ -10,13 +11,17 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabaseConfigured = isSupabaseConfigured();
+  const supabase = supabaseConfigured ? await createClient() : null;
 
-  if (user) {
-    redirect("/studio");
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      redirect("/studio");
+    }
   }
 
   const params = await searchParams;
@@ -37,6 +42,14 @@ export default async function LoginPage({
               Access the security replay studio for agent traces, findings, and
               incident reports.
             </p>
+
+            {!supabaseConfigured ? (
+              <p className="marketingAuthMessage">
+                Authentication is not configured in this environment yet. You can
+                still open the replay studio locally, or add Supabase credentials
+                to `.env` to enable sign in.
+              </p>
+            ) : null}
 
             {params.error ? (
               <p className="marketingAuthError">{params.error}</p>
@@ -84,9 +97,18 @@ export default async function LoginPage({
                 <button type="submit">Create account</button>
               </form>
             </div>
+
+            {!supabaseConfigured ? (
+              <div className="marketingAuthSecondary">
+                <Link className="landingBtnPrimary" href="/studio" style={{ display: "inline-flex" }}>
+                  Continue to replay studio
+                </Link>
+              </div>
+            ) : null}
           </section>
         </div>
       </main>
     </div>
   );
 }
+

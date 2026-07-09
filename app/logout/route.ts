@@ -3,6 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function POST() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
   redirect("/login");
 }

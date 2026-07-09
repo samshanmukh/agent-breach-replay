@@ -18,3 +18,7 @@ export function getSupabaseAnonKey() {
 export function getSupabaseSecretKey() {
   return usable(process.env.SUPABASE_SECRET_KEY);
 }
+
+export function isSupabaseConfigured() {
+  return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
+}

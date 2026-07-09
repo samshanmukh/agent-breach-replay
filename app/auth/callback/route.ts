@@ -4,11 +4,13 @@ import { createClient } from "@/utils/supabase/server";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/";
+  const next = requestUrl.searchParams.get("next") ?? "/studio";
 
   if (code) {
     const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    if (supabase) {
+      await supabase.auth.exchangeCodeForSession(code);
+    }
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));
