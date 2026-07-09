@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import MarketingNav from "@/app/marketing-nav";
 import "./landing.css";
 
 type TabId = "full" | "tracing" | "prevention";
@@ -291,31 +292,8 @@ export default function LandingClient() {
   }, [tab]);
 
   return (
-    <div className="landingPage">
-      <header className="landingNav">
-        <div className="landingContainer landingNavInner">
-          <div className="landingBrand">
-            <div className="landingBrandMark">AB</div>
-            <div>
-              <strong>Agent Breach Replay</strong>
-              <span>Security observability platform</span>
-            </div>
-          </div>
-          <nav className="landingNavLinks">
-            <a href="#story">How it works</a>
-            <a href="#tracing">Tracing</a>
-            <a href="#prevention">Prevention</a>
-          </nav>
-          <div className="landingNavActions">
-            <Link className="landingBtn" href="/login">
-              Sign in
-            </Link>
-            <Link className="landingBtnPrimary" href="/studio">
-              Open replay studio
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="marketingPage">
+      <MarketingNav active="home" />
 
       <main>
         <section className="landingHero">

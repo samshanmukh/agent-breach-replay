@@ -1,11 +1,11 @@
-body:has(.landingPage) {
+body:has(.marketingPage) {
   margin: 0;
   overflow: auto;
   background: #f8f9fb;
   color: #111827;
 }
 
-.landingPage {
+.marketingPage {
   --bg: #f8f9fb;
   --surface: #ffffff;
   --border: #e5e7eb;
@@ -30,16 +30,26 @@ body:has(.landingPage) {
   line-height: 1.5;
 }
 
-.landingPage * {
+.marketingPage * {
   box-sizing: border-box;
 }
 
-.landingPage a {
+.marketingPage a {
   color: inherit;
   text-decoration: none;
 }
 
-.landingContainer {
+.marketingPage button,
+.marketingPage input {
+  font: inherit;
+}
+
+.marketingPage button {
+  cursor: pointer;
+}
+
+.landingContainer,
+.marketingContainer {
   width: min(var(--container), calc(100% - 48px));
   margin: 0 auto;
 }
@@ -136,6 +146,12 @@ body:has(.landingPage) {
 
 .landingBtn:hover {
   background: #f9fafb;
+}
+
+.landingBtnActive {
+  border-color: #111827;
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .landingBtnPrimary {
@@ -631,6 +647,159 @@ body:has(.landingPage) {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+/* Auth */
+.marketingAuth {
+  display: grid;
+  min-height: calc(100vh - 64px);
+  place-items: center;
+  padding: 48px 0 64px;
+}
+
+.marketingAuth .landingContainer {
+  display: flex;
+  justify-content: center;
+}
+
+.marketingAuthCard {
+  width: min(440px, 100%);
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.marketingAuthCard h1 {
+  margin: 12px 0 0;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+.marketingAuthCard > p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.marketingEyebrow {
+  display: inline-flex;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f9fafb;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.marketingAuthForm {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.marketingAuthForm label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.marketingAuthForm input {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: #fff;
+}
+
+.marketingAuthForm input:focus {
+  outline: 2px solid rgba(17, 24, 39, 0.12);
+  border-color: #9ca3af;
+}
+
+.marketingAuthForm button {
+  min-height: 44px;
+  margin-top: 4px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  color: #fff;
+  background: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.marketingAuthForm button:hover {
+  background: var(--accent-hover);
+}
+
+.marketingAuthSecondary {
+  padding-top: 22px;
+  margin-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.marketingAuthSecondary h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.marketingAuthSecondary p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.marketingAuthSecondary button {
+  border-color: var(--border);
+  color: var(--text);
+  background: #fff;
+}
+
+.marketingAuthSecondary button:hover {
+  background: #f9fafb;
+}
+
+.marketingAuthError,
+.marketingAuthMessage {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.marketingAuthError {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.marketingAuthMessage {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.marketingBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.marketingBackLink:hover {
+  color: var(--text);
 }
 
 @media (max-width: 960px) {

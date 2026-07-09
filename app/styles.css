@@ -25,25 +25,25 @@ body {
 
 body {
   margin: 0;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-}
-
-body:has(.landingPage) {
   overflow: auto;
   background: #f8f9fb;
   color: #111827;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
-button,
-input {
+body:has(.studioShell) {
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.studioShell button,
+.studioShell input {
   font: inherit;
 }
 
-button {
+.studioShell button {
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -51,7 +51,7 @@ button {
     transform 160ms ease;
 }
 
-button:hover {
+.studioShell button:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -72,8 +72,7 @@ pre,
 
 .glassPanel,
 .topBar,
-.importModal,
-.authPanel {
+.importModal {
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   background: var(--glass);
@@ -728,97 +727,8 @@ pre,
   cursor: pointer;
 }
 
-.authShell {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 24px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 36%),
-    var(--bg);
-  background-size: 48px 48px, 48px 48px, auto, auto;
-}
-
-.authPanel {
-  width: min(440px, 100%);
-  padding: 24px;
-  background: rgba(18, 21, 27, 0.92);
-}
-
-.authPanel h1 {
-  margin: 10px 0 0;
-  font-size: 2rem;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
-
-.authPanel p {
-  margin: 12px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.authForm {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.authForm label {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.authForm input {
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.authForm button {
-  min-height: 42px;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  color: #000;
-  background: #fff;
-  cursor: pointer;
-}
-
-.secondaryAuth {
-  padding-top: 18px;
-  border-top: 1px solid var(--glass-border);
-}
-
-.secondaryAuth button {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.authError {
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.055);
-}
-
-.authMessage {
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.055);
-}
-
 @media (max-width: 1180px) {
-  body {
+  body:has(.studioShell) {
     overflow: auto;
   }
 
