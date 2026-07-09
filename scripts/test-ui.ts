@@ -35,19 +35,19 @@ async function testLandingPage() {
   );
   record(
     "landing hero headline",
-    html.includes("See how agent breaches happen"),
+    html.includes("Understand every agent action"),
   );
   record(
     "landing story section",
-    html.includes("Instrumentation story tree"),
+    html.includes("How the instrumentation works"),
   );
   record(
     "landing tracing steps",
-    html.includes("Instrumentation hook"),
+    html.includes("Attach to the OpenAI Agents SDK"),
   );
   record(
     "landing prevention steps",
-    html.includes("Replay studio and prevention"),
+    html.includes("Replay the breach and compare prevention"),
   );
   record(
     "landing sign-in link",
@@ -61,9 +61,10 @@ async function testLandingPage() {
   const missing = includesAll(html, [
     "marketingPage",
     "landingNav",
-    "landingHero",
-    "landingStats",
-    "landingStoryPanel",
+    "businessHero",
+    "metricStrip",
+    "featureTree",
+    "storyTimeline",
   ]);
   record("landing key sections", missing.length === 0, `missing ${missing.join(", ")}`);
 }
