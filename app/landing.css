@@ -813,6 +813,53 @@ body:has(.marketingPage) {
   color: var(--m-dark) !important;
 }
 
+/* Studio capabilities */
+.capabilitySection {
+  border-top: 1px solid var(--m-line);
+  background: var(--m-bg);
+}
+
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 44px;
+}
+
+.capabilityGrid article {
+  min-height: 190px;
+  padding: 24px;
+  border: 1px solid var(--m-line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(20, 24, 32, 0.04);
+}
+
+.capabilityGrid article > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--m-soft);
+  color: var(--m-muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.capabilityGrid h3 {
+  margin: 20px 0 0;
+  color: var(--m-text);
+  font-size: 16px;
+}
+
+.capabilityGrid p {
+  margin: 9px 0 0;
+  color: var(--m-muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
 /* Final CTA + footer */
 .finalCta {
   padding: 68px 0;
@@ -1068,7 +1115,8 @@ body:has(.marketingPage) {
 
   .metricGrid,
   .treeBranches,
-  .storyAside {
+  .storyAside,
+  .capabilityGrid {
     grid-template-columns: 1fr;
   }
 

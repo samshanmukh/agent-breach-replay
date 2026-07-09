@@ -147,6 +147,39 @@ const metrics = [
   ["4", "security detectors"],
 ];
 
+const studioCapabilities = [
+  {
+    number: "01",
+    title: "Influence replay",
+    description: "Step through source, model, tool, policy, and detector spans with a synchronized execution timeline.",
+  },
+  {
+    number: "02",
+    title: "Security findings",
+    description: "Inspect detector severity, status, recommendations, and clickable evidence chains.",
+  },
+  {
+    number: "03",
+    title: "OpenInference spans",
+    description: "Filter the raw span tree by AGENT, LLM, TOOL, GUARDRAIL, CHAIN, AUDIO, and USER.",
+  },
+  {
+    number: "04",
+    title: "Incident reports",
+    description: "Export a narrative report with the breach path, controls, and similar incident patterns.",
+  },
+  {
+    number: "05",
+    title: "Guardrail comparison",
+    description: "Compare the observed execution against a contained path with blocked and approval decisions.",
+  },
+  {
+    number: "06",
+    title: "Instrumentation console",
+    description: "Use TypeScript and Python setup examples, live privacy toggles, and feature coverage status.",
+  },
+];
+
 function ProductPreview() {
   return (
     <div className="heroPreview" aria-label="Agent trace preview">
@@ -375,6 +408,28 @@ export default function LandingClient() {
                   </Link>
                 </div>
               </aside>
+            </div>
+          </div>
+        </section>
+
+        <section className="businessSection capabilitySection">
+          <div className="landingContainer">
+            <div className="sectionIntro centered">
+              <span className="sectionEyebrow">Available in the studio</span>
+              <h2>One workspace for the complete security investigation</h2>
+              <p>
+                Every feature exposed by the tracing and prevention pipeline now has
+                a dedicated, usable view in the replay studio.
+              </p>
+            </div>
+            <div className="capabilityGrid">
+              {studioCapabilities.map((capability) => (
+                <article key={capability.number}>
+                  <span>{capability.number}</span>
+                  <h3>{capability.title}</h3>
+                  <p>{capability.description}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>

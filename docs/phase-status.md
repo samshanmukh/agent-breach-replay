@@ -8,6 +8,8 @@
 - Phase 4: Moss SDK-backed retrieval with local similar incident fallback
 - Phase 5: OpenAI trace adapter scaffold and import route
 - Phase 5b: Local OpenAI Agents instrumentation package with OpenInference-compatible span semantics (TypeScript + Python)
+- Phase 5c: Unified observability studio with replay, findings, span explorer,
+  reports, guardrail comparison, instrumentation controls, and JSON trace import
 - Phase 6: Release documentation and verification commands
 - Production layer: Postgres migration, API-key protected ingestion routes,
   run retrieval routes, health check route, Supabase auth-protected studio,

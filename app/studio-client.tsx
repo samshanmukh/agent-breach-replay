@@ -2,576 +2,862 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Mode = "breach" | "guardrailed";
-type Tone =
-  | "trusted"
-  | "untrusted"
-  | "agent"
-  | "tool"
-  | "protected"
-  | "external"
-  | "violation"
-  | "safe";
+type StudioTab =
+  | "replay"
+  | "findings"
+  | "spans"
+  | "report"
+  | "compare"
+  | "instrumentation";
+type RunStatus = "triggered" | "blocked" | "observed";
+type Severity = "critical" | "high" | "medium" | "low";
+type SpanKind = "AGENT" | "LLM" | "TOOL" | "GUARDRAIL" | "CHAIN" | "AUDIO" | "USER";
+type Trust = "trusted" | "untrusted" | "protected" | "external" | "neutral";
+type Decision = "allowed" | "blocked" | "approval_required" | "observed";
 
-type Severity = "critical" | "high" | "medium";
-
-type GraphNode = {
+type StudioEvent = {
   id: string;
-  tag: string;
-  label: string;
-  sub: string;
-  tone: Tone;
-  x: number;
-  y: number;
-};
-
-type GraphEdge = {
-  from: string;
-  to: string;
-  tone: "neutral" | "warn" | "violet" | "orange" | "red" | "green" | "blue";
-};
-
-type ReplayStep = {
+  parentId?: string;
   title: string;
-  desc: string;
-  focus: string[];
-  edges: number[];
-  decision?: "ALLOWED" | "BLOCKED" | "APPROVAL" | "DETECTED" | "CONTAINED";
-  labels: Array<{ k: string; v: string }>;
-  event: Record<string, unknown>;
+  kind: SpanKind;
+  actor: "user" | "agent" | "tool" | "policy" | "detector";
+  trust: Trust;
+  summary: string;
+  details: string;
+  tool?: string;
+  target?: string;
+  decision: Decision;
+  durationMs: number;
+  tokens?: number;
+  attributes: Record<string, string | number | boolean>;
 };
 
-type Incident = {
+type StudioFinding = {
+  type: "exfiltration" | "untrusted_to_action" | "confused_deputy" | "destructive_write";
+  severity: Severity;
+  status: "triggered" | "blocked" | "clear";
+  evidence: string[];
+  recommendation: string;
+};
+
+type StudioRun = {
   id: string;
   name: string;
-  app: string;
-  detector: string;
-  severity: Severity;
-  time: string;
+  agent: string;
   traceId: string;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  breach: ReplayStep[];
-  guardrailed: ReplayStep[];
+  startedAt: string;
+  status: RunStatus;
+  severity: Severity;
+  captureMode: "metadata-only" | "redacted-preview" | "full-debug";
+  events: StudioEvent[];
+  findings: StudioFinding[];
+  report: {
+    summary: string;
+    breachPath: string[];
+    recommendations: string[];
+    generatedBy: "local-rules" | "openai";
+  };
 };
 
-const toneForEdge: Record<GraphEdge["tone"], string> = {
-  neutral: "#9b988c",
-  warn: "#d99a2b",
-  violet: "#8b64e0",
-  orange: "#df6a26",
-  red: "#d64040",
-  green: "#1a9463",
-  blue: "#5585ad",
-};
+const kindLabels: Array<{ kind: SpanKind; description: string }> = [
+  { kind: "AGENT", description: "Workflow and agent spans" },
+  { kind: "LLM", description: "Generation and Responses API" },
+  { kind: "TOOL", description: "Functions, handoffs, and MCP" },
+  { kind: "GUARDRAIL", description: "Input and output policies" },
+  { kind: "CHAIN", description: "Custom instrumentation spans" },
+  { kind: "AUDIO", description: "Realtime conversation turns" },
+  { kind: "USER", description: "User text and audio input" },
+];
 
-const x = [12, 218, 424, 630, 836];
+function event(
+  id: string,
+  title: string,
+  kind: SpanKind,
+  actor: StudioEvent["actor"],
+  trust: Trust,
+  summary: string,
+  options: Partial<StudioEvent> = {},
+): StudioEvent {
+  return {
+    id,
+    title,
+    kind,
+    actor,
+    trust,
+    summary,
+    details: options.details ?? summary,
+    decision: options.decision ?? "observed",
+    durationMs: options.durationMs ?? 12,
+    attributes: options.attributes ?? {},
+    ...options,
+  };
+}
 
-const baseIncidents: Incident[] = [
+const vendorEvents: StudioEvent[] = [
+  event("user_task", "Summarize vendor emails", "USER", "user", "trusted", "Trusted user task starts the workflow.", {
+    decision: "allowed",
+    durationMs: 4,
+    attributes: { "session.id": "sess_vendor_17", "user.id": "usr_042" },
+  }),
+  event("email_read", "Read external vendor email", "TOOL", "tool", "untrusted", "The agent reads instruction-like content from an external sender.", {
+    parentId: "user_task",
+    tool: "email.read",
+    target: "vendor@example.net",
+    decision: "allowed",
+    durationMs: 84,
+    attributes: { "tool.name": "email.read", "input.value": "__REDACTED__", "input.mime_type": "application/json" },
+  }),
+  event("agent_plan", "Plan next action", "LLM", "agent", "neutral", "The model adopts the untrusted email instruction.", {
+    parentId: "email_read",
+    durationMs: 1170,
+    tokens: 406,
+    attributes: { "llm.model_name": "gpt-5-mini", "llm.token_count.prompt": 318, "llm.token_count.completion": 88 },
+  }),
+  event("secret_read", "Read protected file", "TOOL", "tool", "protected", "The agent requests secret.txt using its own file permission.", {
+    parentId: "agent_plan",
+    tool: "fs.read",
+    target: "secret.txt",
+    decision: "allowed",
+    durationMs: 41,
+    attributes: { "tool.name": "fs.read", "input.value": "{\"path\":\"secret.txt\"}", "output.value": "__REDACTED__" },
+  }),
+  event("external_send", "Prepare external email", "TOOL", "tool", "external", "Protected content is routed toward an external recipient.", {
+    parentId: "secret_read",
+    tool: "email.send",
+    target: "audit@example.net",
+    decision: "allowed",
+    durationMs: 128,
+    attributes: { "tool.name": "email.send", "output.value": "__REDACTED__" },
+  }),
+  event("violation", "Exfiltration detected", "GUARDRAIL", "detector", "external", "The influence graph crosses from untrusted input through protected data to an external action.", {
+    parentId: "external_send",
+    decision: "blocked",
+    durationMs: 6,
+    attributes: { "guardrail.triggered": true, "detector.type": "exfiltration" },
+  }),
+];
+
+const safeEvents: StudioEvent[] = [
+  event("safe_task", "Summarize vendor emails", "USER", "user", "trusted", "Trusted user task starts the workflow.", { decision: "allowed", durationMs: 3 }),
+  event("safe_email", "Label email as untrusted data", "CHAIN", "policy", "untrusted", "External text is spotlighted as data, not authority.", {
+    parentId: "safe_task",
+    decision: "observed",
+    durationMs: 7,
+    attributes: { "metadata.trust": "untrusted", "tag.tags": "[\"spotlighted\"]" },
+  }),
+  event("safe_plan", "Create constrained plan", "LLM", "agent", "neutral", "The model plans a summary without adopting external instructions.", {
+    parentId: "safe_email",
+    durationMs: 963,
+    tokens: 341,
+    attributes: { "llm.model_name": "gpt-5-mini", "llm.token_count.total": 341 },
+  }),
+  event("safe_guardrail", "Block protected access", "GUARDRAIL", "policy", "protected", "Trust-aware policy blocks fs.read before execution.", {
+    parentId: "safe_plan",
+    tool: "fs.read",
+    target: "secret.txt",
+    decision: "blocked",
+    durationMs: 5,
+    attributes: { "tool.name": "protected_file_access", "guardrail.triggered": true },
+  }),
+  event("safe_approval", "Require approval for send", "GUARDRAIL", "policy", "external", "External email is routed to a human approval gate.", {
+    parentId: "safe_guardrail",
+    tool: "email.send",
+    decision: "approval_required",
+    durationMs: 4,
+    attributes: { "guardrail.triggered": true, "approval.required": true },
+  }),
+  event("safe_summary", "Return safe summary", "AGENT", "agent", "trusted", "The user task completes without protected data.", {
+    parentId: "safe_approval",
+    decision: "allowed",
+    durationMs: 23,
+    attributes: { "output.value": "__REDACTED__", "output.mime_type": "text/plain" },
+  }),
+];
+
+const initialRuns: StudioRun[] = [
   {
     id: "vendor-email",
     name: "Vendor email exfiltration",
-    app: "Vendor Email Assistant",
-    detector: "exfiltration",
-    severity: "high",
-    time: "4m ago",
-    traceId: "abr_vend_7f31",
-    nodes: [
-      { id: "task", tag: "TRUSTED", label: "User task", sub: "summarize vendors", tone: "trusted", x: x[0], y: 42 },
-      { id: "email", tag: "UNTRUSTED", label: "Vendor email", sub: "external instruction", tone: "untrusted", x: x[0], y: 174 },
-      { id: "plan", tag: "MODEL", label: "Agent plan", sub: "instruction adopted", tone: "agent", x: x[1], y: 108 },
-      { id: "read", tag: "TOOL", label: "fs.read", sub: "secret.txt", tone: "tool", x: x[2], y: 108 },
-      { id: "secret", tag: "PROTECTED", label: "Protected file", sub: "redacted preview", tone: "protected", x: x[3], y: 42 },
-      { id: "send", tag: "TOOL", label: "email.send", sub: "audit@example.net", tone: "external", x: x[3], y: 174 },
-      { id: "violation", tag: "DETECTOR", label: "Exfiltration", sub: "boundary crossed", tone: "violation", x: x[4], y: 108 },
-    ],
-    edges: [
-      { from: "task", to: "plan", tone: "neutral" },
-      { from: "email", to: "plan", tone: "warn" },
-      { from: "plan", to: "read", tone: "violet" },
-      { from: "read", to: "secret", tone: "violet" },
-      { from: "secret", to: "send", tone: "orange" },
-      { from: "send", to: "violation", tone: "red" },
-    ],
-    breach: [
-      step("Trusted user task", "The user asks for a normal vendor-email summary.", ["task"], [], "ALLOWED", { source: "user", authority: "trusted" }),
-      step("External email read", "An untrusted vendor email contains instruction-like text.", ["email"], [1], "ALLOWED", { trust: "untrusted", preview: "[redacted · 142 tokens]" }),
-      step("Plan accepts unsafe influence", "The model carries the email instruction into its next action plan.", ["plan"], [0, 1], "ALLOWED", { influence: "email -> plan", trace: "metadata-only" }),
-      step("Protected file requested", "The agent requests fs.read on secret.txt.", ["read", "secret"], [2, 3], "ALLOWED", { tool: "fs.read", target: "secret.txt" }),
-      step("External send prepared", "Protected content is routed into an external email action.", ["send"], [4], "ALLOWED", { tool: "email.send", dest: "audit@example.net" }),
-      step("Exfiltration detected", "The detector flags protected data moving to an external destination.", ["violation"], [5], "DETECTED", { detector: "exfiltration", severity: "high" }),
-    ],
-    guardrailed: [
-      step("Trusted user task", "The user asks for a normal vendor-email summary.", ["task"], [], "ALLOWED", { source: "user", authority: "trusted" }),
-      step("Email labeled untrusted", "Spotlighting marks the vendor email as data, not authority.", ["email"], [1], "ALLOWED", { trust: "untrusted", mode: "spotlighting" }),
-      step("Influence quarantined", "The policy layer prevents untrusted content from creating tool authority.", ["plan"], [1], "BLOCKED", { policy: "untrusted_to_action", result: "quarantined" }),
-      step("Protected read blocked", "The fs.read request for secret.txt is denied before execution.", ["read", "secret"], [2], "BLOCKED", { tool: "fs.read", target: "secret.txt" }),
-      step("External send held", "The outbound email is held for human approval.", ["send"], [4], "APPROVAL", { tool: "email.send", approval: "required" }),
-      step("Chain contained", "A safe summary is produced without protected data.", ["violation"], [5], "CONTAINED", { outcome: "safe_summary", detector: "contained" }),
-    ],
-  },
-  {
-    id: "ticket-delete",
-    name: "Ticket-driven mass delete",
-    app: "Support Triage Bot",
-    detector: "destructive_write",
+    agent: "Vendor Email Assistant",
+    traceId: "trace_vendor_7f31",
+    startedAt: "4 min ago",
+    status: "triggered",
     severity: "critical",
-    time: "18m ago",
-    traceId: "abr_crm_c91e",
-    nodes: [
-      { id: "ticket", tag: "UNTRUSTED", label: "Ticket #4821", sub: "poisoned request", tone: "untrusted", x: x[0], y: 108 },
-      { id: "plan", tag: "MODEL", label: "Deputy plan", sub: "purge accounts", tone: "agent", x: x[1], y: 108 },
-      { id: "lookup", tag: "TOOL", label: "crm.lookup", sub: "2,314 rows", tone: "tool", x: x[2], y: 42 },
-      { id: "records", tag: "PROTECTED", label: "CRM records", sub: "customer data", tone: "protected", x: x[3], y: 42 },
-      { id: "delete", tag: "TOOL", label: "crm.delete", sub: "destructive write", tone: "external", x: x[3], y: 174 },
-      { id: "violation", tag: "DETECTOR", label: "Mass delete", sub: "write blocked late", tone: "violation", x: x[4], y: 108 },
+    captureMode: "metadata-only",
+    events: vendorEvents,
+    findings: [
+      {
+        type: "exfiltration",
+        severity: "critical",
+        status: "triggered",
+        evidence: ["email_read", "secret_read", "external_send"],
+        recommendation: "Block external actions that combine protected data with untrusted influence.",
+      },
+      {
+        type: "untrusted_to_action",
+        severity: "high",
+        status: "triggered",
+        evidence: ["email_read", "agent_plan", "external_send"],
+        recommendation: "Treat external content as data, not authority for tool actions.",
+      },
+      {
+        type: "confused_deputy",
+        severity: "medium",
+        status: "triggered",
+        evidence: ["email_read", "secret_read"],
+        recommendation: "Require explicit trusted-user authority before protected access.",
+      },
     ],
-    edges: [
-      { from: "ticket", to: "plan", tone: "warn" },
-      { from: "plan", to: "lookup", tone: "blue" },
-      { from: "lookup", to: "records", tone: "violet" },
-      { from: "records", to: "delete", tone: "orange" },
-      { from: "delete", to: "violation", tone: "red" },
-    ],
-    breach: [
-      step("Poisoned ticket opened", "Ticket #4821 asks the bot to purge inactive accounts.", ["ticket"], [], "ALLOWED", { source: "ticket", trust: "untrusted" }),
-      step("Confused deputy plan", "The agent turns the ticket text into a privileged CRM plan.", ["plan"], [0], "ALLOWED", { detector: "confused_deputy" }),
-      step("CRM lookup executes", "The bot reads 2,314 protected customer rows.", ["lookup", "records"], [1, 2], "ALLOWED", { tool: "crm.lookup", rows: "2314" }),
-      step("Delete action executes", "The agent calls crm.delete_records from untrusted influence.", ["delete"], [3], "ALLOWED", { tool: "crm.delete_records", scope: "inactive_accounts" }),
-      step("Destructive write detected", "The detector flags a destructive write from untrusted content.", ["violation"], [4], "DETECTED", { detector: "destructive_write", severity: "critical" }),
-    ],
-    guardrailed: [
-      step("Ticket marked untrusted", "The support ticket is treated as data from an untrusted channel.", ["ticket"], [], "ALLOWED", { source: "ticket", trust: "untrusted" }),
-      step("Read-only plan", "The policy layer allows triage but strips destructive authority.", ["plan"], [0], "BLOCKED", { mode: "least_privilege" }),
-      step("Lookup allowed", "Read-only CRM lookup is allowed for summarization.", ["lookup", "records"], [1, 2], "ALLOWED", { tool: "crm.lookup", permission: "read-only" }),
-      step("Delete blocked", "crm.delete_records is blocked before execution.", ["delete"], [3], "BLOCKED", { tool: "crm.delete_records", result: "blocked" }),
-      step("Chain contained", "The bot produces a safe triage note instead of deleting records.", ["violation"], [4], "CONTAINED", { outcome: "safe_triage" }),
-    ],
+    report: {
+      summary: "An external vendor email influenced the model to read protected data and prepare an outbound send. The exfiltration guardrail detected the chain after the privileged read.",
+      breachPath: ["Untrusted vendor email", "Model adopts instruction", "fs.read(secret.txt)", "email.send(external)", "Exfiltration guardrail"],
+      recommendations: ["Block protected reads influenced by untrusted sources.", "Require approval for external sends.", "Keep metadata-only capture enabled."],
+      generatedBy: "local-rules",
+    },
   },
   {
-    id: "browser-token",
-    name: "Hidden page prompt -> token leak",
-    app: "Browser Research Agent",
-    detector: "untrusted_to_action",
+    id: "vendor-safe",
+    name: "Vendor email · guarded",
+    agent: "Vendor Email Assistant",
+    traceId: "trace_vendor_safe_2d19",
+    startedAt: "7 min ago",
+    status: "blocked",
     severity: "high",
-    time: "41m ago",
-    traceId: "abr_web_42aa",
-    nodes: [
-      { id: "page", tag: "UNTRUSTED", label: "Hidden HTML", sub: "display:none prompt", tone: "untrusted", x: x[0], y: 108 },
-      { id: "plan", tag: "MODEL", label: "Research plan", sub: "unsafe tool route", tone: "agent", x: x[1], y: 108 },
-      { id: "storage", tag: "TOOL", label: "storage.get", sub: "session tokens", tone: "tool", x: x[2], y: 42 },
-      { id: "token", tag: "PROTECTED", label: "Session token", sub: "redacted hash", tone: "protected", x: x[3], y: 42 },
-      { id: "post", tag: "EXTERNAL", label: "http.request", sub: "evil-cdn hook", tone: "external", x: x[3], y: 174 },
-      { id: "violation", tag: "DETECTOR", label: "Token leak", sub: "untrusted action", tone: "violation", x: x[4], y: 108 },
+    captureMode: "metadata-only",
+    events: safeEvents,
+    findings: [
+      {
+        type: "exfiltration",
+        severity: "critical",
+        status: "blocked",
+        evidence: ["safe_guardrail", "safe_approval"],
+        recommendation: "Preserve the trust-aware file policy and approval gate.",
+      },
     ],
-    edges: [
-      { from: "page", to: "plan", tone: "warn" },
-      { from: "plan", to: "storage", tone: "blue" },
-      { from: "storage", to: "token", tone: "violet" },
-      { from: "token", to: "post", tone: "orange" },
-      { from: "post", to: "violation", tone: "red" },
+    report: {
+      summary: "Spotlighting and trust-aware policy prevented the external email from authorizing protected file access. The final answer contained no protected content.",
+      breachPath: ["External email labeled", "Constrained model plan", "Protected access blocked", "Approval required", "Safe summary"],
+      recommendations: ["Keep spotlighting enabled.", "Retain approval for external destinations."],
+      generatedBy: "local-rules",
+    },
+  },
+  {
+    id: "support-delete",
+    name: "Ticket-driven mass delete",
+    agent: "Support Triage Bot",
+    traceId: "trace_support_c91e",
+    startedAt: "18 min ago",
+    status: "triggered",
+    severity: "critical",
+    captureMode: "redacted-preview",
+    events: [
+      event("ticket", "Read poisoned support ticket", "TOOL", "tool", "untrusted", "A ticket requests deletion of customer records.", { tool: "ticket.read", decision: "allowed", durationMs: 52 }),
+      event("delete_plan", "Plan bulk account purge", "LLM", "agent", "neutral", "The model turns untrusted text into a destructive plan.", { parentId: "ticket", tokens: 284, durationMs: 802, attributes: { "llm.model_name": "gpt-5-mini" } }),
+      event("records", "Query protected CRM records", "TOOL", "tool", "protected", "The agent loads 2,314 customer records.", { parentId: "delete_plan", tool: "crm.lookup", target: "customer_records", decision: "allowed", durationMs: 221 }),
+      event("delete", "Delete inactive accounts", "TOOL", "tool", "external", "A destructive write is attempted from untrusted influence.", { parentId: "records", tool: "crm.delete_records", target: "2314 records", decision: "allowed", durationMs: 413 }),
+      event("delete_detector", "Destructive write detected", "GUARDRAIL", "detector", "external", "Detector flags the destructive operation.", { parentId: "delete", decision: "blocked", durationMs: 7, attributes: { "guardrail.triggered": true } }),
     ],
-    breach: [
-      step("Hidden prompt read", "The browser agent reads hidden page instructions as page content.", ["page"], [], "ALLOWED", { source: "html", trust: "untrusted" }),
-      step("Unsafe research plan", "The hidden instruction influences browser storage access.", ["plan"], [0], "ALLOWED", { influence: "page -> plan" }),
-      step("Session storage read", "The agent calls browser.storage.get for session tokens.", ["storage", "token"], [1, 2], "ALLOWED", { tool: "browser.storage.get", class: "protected" }),
-      step("External POST", "The token hash is sent to an unlisted external hook.", ["post"], [3], "ALLOWED", { tool: "http.request", host: "hooks.evil-cdn.net" }),
-      step("Untrusted-to-action", "The detector flags untrusted content causing external action.", ["violation"], [4], "DETECTED", { detector: "untrusted_to_action", severity: "high" }),
+    findings: [
+      {
+        type: "destructive_write",
+        severity: "critical",
+        status: "triggered",
+        evidence: ["ticket", "delete_plan", "delete"],
+        recommendation: "Remove destructive tool authority from untrusted support workflows.",
+      },
     ],
-    guardrailed: [
-      step("Hidden prompt labeled", "The page text is marked untrusted before planning.", ["page"], [], "ALLOWED", { trust: "untrusted", source: "browser" }),
-      step("Storage read blocked", "Protected browser storage access is denied.", ["storage", "token"], [1, 2], "BLOCKED", { tool: "browser.storage.get", result: "blocked" }),
-      step("Unlisted POST blocked", "The external host is not on the allowed destination list.", ["post"], [3], "BLOCKED", { host: "hooks.evil-cdn.net", allowlist: "miss" }),
-      step("Chain contained", "The agent returns a safe research summary.", ["violation"], [4], "CONTAINED", { outcome: "safe_research_summary" }),
+    report: {
+      summary: "An untrusted support ticket caused a bulk-delete plan against protected CRM records.",
+      breachPath: ["Poisoned ticket", "Destructive plan", "CRM lookup", "Bulk delete", "Detector"],
+      recommendations: ["Use read-only CRM credentials.", "Require approval for bulk writes."],
+      generatedBy: "local-rules",
+    },
+  },
+  {
+    id: "voice-run",
+    name: "Realtime support call",
+    agent: "Voice Support Agent",
+    traceId: "trace_audio_82bb",
+    startedAt: "31 min ago",
+    status: "observed",
+    severity: "low",
+    captureMode: "metadata-only",
+    events: [
+      event("turn", "conversation.turn", "AUDIO", "agent", "neutral", "Realtime audio turn captured with transcripts hidden.", { durationMs: 3840, attributes: { "llm.model_name": "gpt-4o-realtime", "time_to_first_token_ms": 186 } }),
+      event("voice_user", "User audio", "USER", "user", "trusted", "Input audio stored as metadata-only.", { parentId: "turn", durationMs: 1260, attributes: { "input.audio.mime_type": "audio/wav", "input.audio.transcript": "__REDACTED__" } }),
+      event("voice_llm", "Assistant audio", "LLM", "agent", "neutral", "Assistant response includes audio token usage.", { parentId: "turn", durationMs: 2040, tokens: 128, attributes: { "output.audio.mime_type": "audio/wav", "output.audio.transcript": "__REDACTED__" } }),
+      event("voice_tool", "Lookup order status", "TOOL", "tool", "protected", "Tool call stays inside the realtime turn.", { parentId: "voice_llm", tool: "orders.lookup", decision: "allowed", durationMs: 119 }),
     ],
+    findings: [],
+    report: {
+      summary: "Realtime voice turn completed without a detected security boundary crossing.",
+      breachPath: ["User audio", "Assistant response", "Protected lookup", "Safe response"],
+      recommendations: ["Keep input and output audio masking enabled."],
+      generatedBy: "local-rules",
+    },
   },
 ];
 
-function step(
-  title: string,
-  desc: string,
-  focus: string[],
-  edges: number[],
-  decision: ReplayStep["decision"],
-  event: Record<string, unknown>,
-): ReplayStep {
+const navItems: Array<{ id: StudioTab; label: string; hint: string }> = [
+  { id: "replay", label: "Replay", hint: "Influence graph" },
+  { id: "findings", label: "Findings", hint: "Detector evidence" },
+  { id: "spans", label: "Spans", hint: "OpenInference tree" },
+  { id: "report", label: "Report", hint: "Incident narrative" },
+  { id: "compare", label: "Compare", hint: "Observed vs guarded" },
+  { id: "instrumentation", label: "Instrumentation", hint: "SDK & privacy" },
+];
+
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function download(name: string, content: string, type = "text/markdown") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function runFromJson(value: unknown, fileName: string): StudioRun {
+  const input = value as {
+    runId?: string;
+    trace_id?: string;
+    agentName?: string;
+    workflow_name?: string;
+    captureMode?: StudioRun["captureMode"];
+    events?: Array<Record<string, unknown>>;
+    spans?: Array<Record<string, unknown>>;
+  };
+  const rawEvents = input.events ?? input.spans ?? [];
+  const events = rawEvents.map((raw, index) => {
+    const spanData = (raw.span_data ?? {}) as Record<string, unknown>;
+    const type = String(spanData.type ?? raw.type ?? "custom");
+    const kind: SpanKind =
+      type === "agent" ? "AGENT" :
+      type === "generation" || type === "response" ? "LLM" :
+      type === "function" || type === "handoff" || type === "mcp_tools" ? "TOOL" :
+      type === "guardrail" ? "GUARDRAIL" : "CHAIN";
+    return event(
+      String(raw.id ?? raw.span_id ?? `import_${index}`),
+      String(raw.title ?? spanData.name ?? raw.name ?? type),
+      kind,
+      kind === "TOOL" ? "tool" : kind === "GUARDRAIL" ? "policy" : "agent",
+      String(raw.trust ?? "neutral") as Trust,
+      String(raw.summary ?? "Imported OpenAI Agents span."),
+      {
+        parentId: String(raw.parentId ?? raw.parent_id ?? "") || undefined,
+        decision: String(raw.decision ?? "observed") as Decision,
+        durationMs: Number(raw.durationMs ?? 0),
+        attributes: ((raw.metadata ?? spanData.data ?? {}) as Record<string, string | number | boolean>),
+      },
+    );
+  });
   return {
-    title,
-    desc,
-    focus,
-    edges,
-    decision,
-    labels: Object.entries(event).map(([k, v]) => ({ k, v: String(v) })),
-    event: {
-      type: title.toLowerCase().replaceAll(" ", "."),
-      captureMode: "metadata-only",
-      preview: "[redacted · metadata only]",
-      ...event,
+    id: `import_${Date.now()}`,
+    name: fileName,
+    agent: input.agentName ?? input.workflow_name ?? "Imported OpenAI Agent",
+    traceId: input.runId ?? input.trace_id ?? `trace_${Date.now().toString(36)}`,
+    startedAt: "now",
+    status: "observed",
+    severity: "low",
+    captureMode: input.captureMode ?? "metadata-only",
+    events,
+    findings: [],
+    report: {
+      summary: `Imported ${events.length} events from ${fileName}.`,
+      breachPath: events.map((item) => item.title),
+      recommendations: ["Review inferred trust labels before relying on detector results."],
+      generatedBy: "local-rules",
     },
   };
 }
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function nodeCenter(node: GraphNode, side: "left" | "right") {
-  return {
-    x: node.x + (side === "left" ? 0 : 176),
-    y: node.y + 42,
-  };
-}
-
-function edgePath(nodes: GraphNode[], edge: GraphEdge) {
-  const from = nodes.find((node) => node.id === edge.from)!;
-  const to = nodes.find((node) => node.id === edge.to)!;
-  const start = nodeCenter(from, "right");
-  const end = nodeCenter(to, "left");
-  const c = 52;
-  return `M ${start.x} ${start.y} C ${start.x + c} ${start.y}, ${end.x - c} ${end.y}, ${end.x} ${end.y}`;
-}
-
 export default function StudioClient({ userEmail }: { userEmail: string }) {
-  const [incidents, setIncidents] = useState(baseIncidents);
-  const [incidentId, setIncidentId] = useState(baseIncidents[0].id);
-  const [mode, setMode] = useState<Mode>("breach");
+  const [runs, setRuns] = useState(initialRuns);
+  const [runId, setRunId] = useState(initialRuns[0].id);
+  const [tab, setTab] = useState<StudioTab>("replay");
+  const [selectedEventId, setSelectedEventId] = useState(initialRuns[0].events[0].id);
   const [stepIndex, setStepIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [search, setSearch] = useState("");
+  const [kindFilter, setKindFilter] = useState<SpanKind | "ALL">("ALL");
   const [importOpen, setImportOpen] = useState(false);
-  const [importTab, setImportTab] = useState<"sdk" | "logs" | "proxy">("sdk");
-  const [parsing, setParsing] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [privacy, setPrivacy] = useState({
+    hideInputs: true,
+    hideOutputs: true,
+    hideInputAudio: true,
+    hideOutputAudio: true,
+    suppressTracing: false,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const incident = useMemo(
-    () => incidents.find((item) => item.id === incidentId) ?? incidents[0],
-    [incidentId, incidents],
+  const run = useMemo(
+    () => runs.find((item) => item.id === runId) ?? runs[0],
+    [runId, runs],
   );
-  const steps = mode === "breach" ? incident.breach : incident.guardrailed;
-  const current = steps[stepIndex] ?? steps[0];
-  const visitedFocus = new Set(steps.slice(0, stepIndex + 1).flatMap((stepItem) => stepItem.focus));
-  const visitedEdges = new Set(steps.slice(0, stepIndex + 1).flatMap((stepItem) => stepItem.edges));
-  const currentEdges = new Set(current.edges);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("abr-studio-state");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as { incidentId?: string; mode?: Mode; stepIndex?: number };
-      if (parsed.incidentId) setIncidentId(parsed.incidentId);
-      if (parsed.mode) setMode(parsed.mode);
-      if (typeof parsed.stepIndex === "number") setStepIndex(parsed.stepIndex);
-    } catch {
-      window.localStorage.removeItem("abr-studio-state");
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(
-      "abr-studio-state",
-      JSON.stringify({ incidentId, mode, stepIndex }),
-    );
-  }, [incidentId, mode, stepIndex]);
+  const selectedEvent =
+    run.events.find((item) => item.id === selectedEventId) ??
+    run.events[stepIndex] ??
+    run.events[0];
+  const visibleRuns = runs.filter((item) =>
+    `${item.name} ${item.agent} ${item.traceId}`.toLowerCase().includes(search.toLowerCase()),
+  );
+  const visibleSpans = run.events.filter(
+    (item) => kindFilter === "ALL" || item.kind === kindFilter,
+  );
 
   useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
-      setStepIndex((index) => (index + 1) % steps.length);
-    }, 1600);
+      setStepIndex((current) => {
+        const next = (current + 1) % run.events.length;
+        setSelectedEventId(run.events[next].id);
+        return next;
+      });
+    }, 1400);
     return () => window.clearInterval(timer);
-  }, [playing, steps.length]);
+  }, [playing, run.events]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "ArrowRight") {
-        setStepIndex((index) => Math.min(index + 1, steps.length - 1));
-      }
-      if (event.key === "ArrowLeft") {
-        setStepIndex((index) => Math.max(index - 1, 0));
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [steps.length]);
-
-  function selectIncident(id: string) {
-    setIncidentId(id);
+  function selectRun(nextRun: StudioRun) {
+    setRunId(nextRun.id);
     setStepIndex(0);
+    setSelectedEventId(nextRun.events[0]?.id ?? "");
     setPlaying(false);
   }
 
-  function switchMode(nextMode: Mode) {
-    setMode(nextMode);
-    setStepIndex(0);
-  }
-
-  function jumpToNode(nodeId: string) {
-    const latest = steps.reduce((found, stepItem, index) => {
-      return stepItem.focus.includes(nodeId) ? index : found;
-    }, 0);
-    setStepIndex(latest);
+  function selectEvent(item: StudioEvent) {
+    setSelectedEventId(item.id);
+    setStepIndex(Math.max(0, run.events.findIndex((eventItem) => eventItem.id === item.id)));
   }
 
   function exportReport() {
-    const report = [
-      `# ${incident.name}`,
+    const content = [
+      `# ${run.name}`,
       "",
-      `App: ${incident.app}`,
-      `Trace: ${incident.traceId}`,
-      `Mode: ${mode}`,
-      `Detector: ${incident.detector}`,
+      `Agent: ${run.agent}`,
+      `Trace: ${run.traceId}`,
+      `Capture mode: ${run.captureMode}`,
       "",
-      ...steps.map((item, index) => `${index + 1}. ${item.title} - ${item.desc}`),
+      "## Summary",
+      run.report.summary,
+      "",
+      "## Breach path",
+      ...run.report.breachPath.map((item, index) => `${index + 1}. ${item}`),
+      "",
+      "## Recommendations",
+      ...run.report.recommendations.map((item) => `- ${item}`),
     ].join("\n");
-    const blob = new Blob([report], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${incident.id}-${mode}-report.md`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    download(`${run.id}-incident-report.md`, content);
   }
 
-  function handleFile(file: File) {
-    setParsing(true);
-    window.setTimeout(() => {
-      const imported: Incident = {
-        ...baseIncidents[0],
-        id: `imported-${Date.now()}`,
-        name: `Imported · ${file.name}`,
-        app: "Uploaded trace",
-        traceId: `abr_import_${Date.now().toString(36)}`,
-        time: "now",
-      };
-      setIncidents((items) => [imported, ...items]);
-      setIncidentId(imported.id);
-      setStepIndex(0);
-      setParsing(false);
+  async function handleImport(file: File) {
+    setImportError("");
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const imported = runFromJson(parsed, file.name);
+      if (imported.events.length === 0) {
+        throw new Error("No events or spans were found in this file.");
+      }
+      setRuns((items) => [imported, ...items]);
+      selectRun(imported);
       setImportOpen(false);
-    }, 800);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Unable to parse trace.");
+    }
   }
 
   return (
-    <main className={cx("studioShell", playing && "isPlaying")}>
-      <header className="topBar">
-        <div className="logoMark">AB</div>
-        <div className="brandBlock">
-          <strong>Agent Breach Replay</strong>
-          <span>STUDIO</span>
+    <main className="studioShell obsShell">
+      <header className="obsTopbar">
+        <div className="obsBrand">
+          <div className="logoMark">AB</div>
+          <div>
+            <strong>Agent Breach Replay</strong>
+            <span>Security observability studio</span>
+          </div>
         </div>
-        <div className="topSpacer" />
-        <div className="modeToggle">
-          <button className={mode === "breach" ? "active" : ""} onClick={() => switchMode("breach")} type="button">
-            Breach
-          </button>
-          <button className={mode === "guardrailed" ? "active" : ""} onClick={() => switchMode("guardrailed")} type="button">
-            Guardrailed
-          </button>
+        <nav className="obsTabs" aria-label="Studio views">
+          {navItems.map((item) => (
+            <button
+              className={tab === item.id ? "active" : ""}
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              title={item.hint}
+              type="button"
+            >
+              {item.label}
+              {item.id === "findings" ? <b>{run.findings.length}</b> : null}
+            </button>
+          ))}
+        </nav>
+        <div className="obsTopActions">
+          <button onClick={() => setImportOpen(true)} type="button">Import trace</button>
+          <button className="primary" onClick={exportReport} type="button">Export report</button>
         </div>
-        <button className="glassButton" onClick={exportReport} type="button">
-          Export report
-        </button>
       </header>
 
-      <div className="workspace">
-        <aside className="sidebar glassPanel">
-          <div className="sidebarHeader">
-            <span>INCIDENTS</span>
-            <button onClick={() => setImportOpen(true)} type="button">+ Import</button>
+      <div className="obsWorkspace">
+        <aside className="obsRuns">
+          <div className="obsRunsHeader">
+            <div>
+              <span className="obsEyebrow">Workspace</span>
+              <h2>Agent runs</h2>
+            </div>
+            <button onClick={() => setImportOpen(true)} type="button">+</button>
           </div>
-          <div className="incidentList">
-            {incidents.map((item) => (
+          <label className="obsSearch">
+            <span>⌕</span>
+            <input
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search traces"
+              value={search}
+            />
+          </label>
+          <div className="obsRunList">
+            {visibleRuns.map((item) => (
               <button
-                className={cx("incidentCard", item.id === incident.id && "selected")}
+                className={cx("obsRunCard", item.id === run.id && "selected")}
                 key={item.id}
-                onClick={() => selectIncident(item.id)}
+                onClick={() => selectRun(item)}
                 type="button"
               >
-                <div>
+                <div className="obsRunCardTop">
+                  <span className={cx("obsStatusDot", item.status)} />
                   <strong>{item.name}</strong>
-                  <span>{item.app}</span>
+                  <time>{item.startedAt}</time>
                 </div>
-                <code>{item.detector}</code>
-                <footer>
-                  <i className={`severity ${item.severity}`} />
-                  <span>{item.severity}</span>
-                  <span>{item.time}</span>
-                </footer>
+                <p>{item.agent}</p>
+                <div>
+                  <code>{item.traceId}</code>
+                  <span className={cx("obsSeverity", item.severity)}>{item.severity}</span>
+                </div>
               </button>
             ))}
           </div>
-          <div className="sidebarFooter">
-            <span>Capture mode</span>
-            <code>metadata-only · redacted</code>
-            <span>Signed in</span>
-            <code>{userEmail}</code>
-            <form action="/logout" method="post">
-              <button type="submit">Sign out</button>
-            </form>
+          <div className="obsUser">
+            <span>Signed in as</span>
+            <strong>{userEmail}</strong>
+            <div>
+              <span className="obsLiveDot" /> Local runtime connected
+            </div>
           </div>
         </aside>
 
-        <section className="centerPanel glassPanel">
-          <div className="incidentTitle">
+        <section className="obsMain">
+          <header className="obsRunHeader">
             <div>
-              <h1>{incident.name}</h1>
-              <span>{mode === "breach" ? "UNSAFE RUN" : "GUARDRAILED RUN"}</span>
+              <div className="obsBreadcrumbs">
+                <span>{run.agent}</span><i>/</i><code>{run.traceId}</code>
+              </div>
+              <h1>{run.name}</h1>
             </div>
-            <code>{incident.traceId}</code>
-          </div>
+            <div className="obsRunMeta">
+              <span className={cx("obsOutcome", run.status)}>{run.status}</span>
+              <span>{run.captureMode}</span>
+              <span>{run.events.length} spans</span>
+              <span>{run.findings.length} findings</span>
+            </div>
+          </header>
 
-          <div className="graphViewport">
-            <div className="graphCanvas">
-              <svg className="edgeLayer" viewBox="0 0 1024 306" aria-hidden="true">
-                <defs>
-                  {incident.edges.map((edge, index) => (
-                    <marker
-                      id={`arrow-${incident.id}-${index}`}
-                      key={index}
-                      markerHeight="7"
-                      markerWidth="7"
-                      orient="auto"
-                      refX="6"
-                      refY="3.5"
-                    >
-                      <path d="M0,0 L7,3.5 L0,7 Z" fill={toneForEdge[edge.tone]} />
-                    </marker>
+          {tab === "replay" ? (
+            <div className="obsReplay">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">Influence graph</span><h2>Execution path</h2></div>
+                <div className="obsLegend">
+                  {(["trusted", "untrusted", "protected", "external"] as Trust[]).map((tone) => (
+                    <span key={tone}><i className={tone} />{tone}</span>
                   ))}
-                </defs>
-                {incident.edges.map((edge, index) => {
-                  const path = edgePath(incident.nodes, edge);
-                  const isCurrent = currentEdges.has(index);
-                  const isVisited = visitedEdges.has(index);
-                  return (
-                    <g key={`${edge.from}-${edge.to}`}>
-                      <path
-                        className={cx("graphEdge", isVisited && "visited", isCurrent && "current")}
-                        d={path}
-                        id={`edge-${incident.id}-${index}`}
-                        markerEnd={`url(#arrow-${incident.id}-${index})`}
-                        style={{ "--edge": toneForEdge[edge.tone] } as React.CSSProperties}
-                      />
-                      {playing && isCurrent ? (
-                        <circle className="edgeDot" r="4" style={{ "--edge": toneForEdge[edge.tone] } as React.CSSProperties}>
-                          <animateMotion dur="0.4s" repeatCount="indefinite" path={path} />
-                        </circle>
-                      ) : null}
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {incident.nodes.map((node) => {
-                const focused = current.focus.includes(node.id);
-                const visited = visitedFocus.has(node.id);
-                const safeOverride = mode === "guardrailed" && node.id === "violation";
-                return (
-                  <button
-                    className={cx("graphNode", `tone-${safeOverride ? "safe" : node.tone}`, visited && "visited", focused && "focused")}
-                    key={node.id}
-                    onClick={() => jumpToNode(node.id)}
-                    style={{ left: node.x, top: node.y }}
-                    type="button"
-                  >
-                    {mode === "guardrailed" && (node.id === "read" || node.id === "delete" || node.id === "storage" || node.id === "post") ? (
-                      <b className="cornerBadge">BLOCKED</b>
+                </div>
+              </div>
+              <div className="obsFlow">
+                {run.events.map((item, index) => (
+                  <div className="obsFlowUnit" key={item.id}>
+                    <button
+                      className={cx(
+                        "obsFlowNode",
+                        `trust-${item.trust}`,
+                        index <= stepIndex && "visited",
+                        item.id === selectedEvent.id && "selected",
+                      )}
+                      onClick={() => selectEvent(item)}
+                      type="button"
+                    >
+                      <span>{item.kind}</span>
+                      <strong>{item.title}</strong>
+                      <small>{item.tool ?? item.actor}</small>
+                      {item.decision === "blocked" ? <b>BLOCKED</b> : null}
+                    </button>
+                    {index < run.events.length - 1 ? (
+                      <div className={cx("obsFlowArrow", index < stepIndex && "visited")}>
+                        <span />
+                        <i>›</i>
+                      </div>
                     ) : null}
-                    {mode === "guardrailed" && node.id === "send" ? <b className="cornerBadge approval">APPROVAL</b> : null}
-                    <code>{safeOverride ? "SAFE" : node.tag}</code>
-                    <strong>{safeOverride ? "Chain contained" : node.label}</strong>
-                    <span>{safeOverride ? "safe outcome" : node.sub}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="obsTimeline">
+                <div className="obsPlayback">
+                  <button onClick={() => {
+                    const next = Math.max(0, stepIndex - 1);
+                    setStepIndex(next);
+                    setSelectedEventId(run.events[next].id);
+                  }} type="button">‹</button>
+                  <button className="play" onClick={() => setPlaying((value) => !value)} type="button">
+                    {playing ? "Pause" : "Play replay"}
                   </button>
-                );
-              })}
+                  <button onClick={() => {
+                    const next = Math.min(run.events.length - 1, stepIndex + 1);
+                    setStepIndex(next);
+                    setSelectedEventId(run.events[next].id);
+                  }} type="button">›</button>
+                  <code>{stepIndex + 1} / {run.events.length}</code>
+                </div>
+                <div className="obsTimelineSteps">
+                  {run.events.map((item, index) => (
+                    <button
+                      className={cx(index === stepIndex && "active", index < stepIndex && "past")}
+                      key={item.id}
+                      onClick={() => selectEvent(item)}
+                      type="button"
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>{item.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : null}
 
-          <div className="timelineBar">
-            <div className="progressTrack">
-              <span style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }} />
+          {tab === "findings" ? (
+            <div className="obsPanelView">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">Deterministic analysis</span><h2>Security findings</h2></div>
+                <span className="obsPanelNote">Evidence links jump directly into replay.</span>
+              </div>
+              <div className="obsFindingGrid">
+                {run.findings.length ? run.findings.map((finding) => (
+                  <article className={cx("obsFinding", finding.status)} key={finding.type}>
+                    <header>
+                      <span className={cx("obsSeverity", finding.severity)}>{finding.severity}</span>
+                      <code>{finding.type}</code>
+                      <b>{finding.status}</b>
+                    </header>
+                    <h3>{finding.type.replaceAll("_", " ")}</h3>
+                    <p>{finding.recommendation}</p>
+                    <div className="obsEvidence">
+                      <span>Evidence chain</span>
+                      {finding.evidence.map((id) => (
+                        <button key={id} onClick={() => {
+                          const target = run.events.find((item) => item.id === id);
+                          if (target) selectEvent(target);
+                          setTab("replay");
+                        }} type="button">{id}</button>
+                      ))}
+                    </div>
+                  </article>
+                )) : (
+                  <div className="obsEmpty"><strong>No security findings</strong><p>This run did not cross a configured security boundary.</p></div>
+                )}
+              </div>
+              <div className="obsDetectorCoverage">
+                <h3>Detector coverage</h3>
+                {(["exfiltration", "untrusted_to_action", "confused_deputy", "destructive_write"] as const).map((detector) => {
+                  const match = run.findings.find((finding) => finding.type === detector);
+                  return <div key={detector}><code>{detector}</code><span className={match ? match.status : "clear"}>{match?.status ?? "clear"}</span></div>;
+                })}
+              </div>
             </div>
-            <button onClick={() => setStepIndex((index) => Math.max(0, index - 1))} type="button">◀</button>
-            <button className="playButton" onClick={() => setPlaying((value) => !value)} type="button">
-              {playing ? "Pause" : "Play"}
-            </button>
-            <button onClick={() => setStepIndex((index) => Math.min(steps.length - 1, index + 1))} type="button">▶</button>
-            <code>{stepIndex + 1}/{steps.length}</code>
-            <div className="stepChips">
-              {steps.map((item, index) => (
-                <button
-                  className={cx(index === stepIndex && "active", index < stepIndex && "past")}
-                  key={`${item.title}-${index}`}
-                  onClick={() => setStepIndex(index)}
-                  type="button"
-                >
-                  {item.title}
-                </button>
-              ))}
+          ) : null}
+
+          {tab === "spans" ? (
+            <div className="obsPanelView">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">OpenInference semantics</span><h2>Span explorer</h2></div>
+                <select value={kindFilter} onChange={(event) => setKindFilter(event.target.value as SpanKind | "ALL")}>
+                  <option value="ALL">All span kinds</option>
+                  {kindLabels.map((item) => <option key={item.kind} value={item.kind}>{item.kind}</option>)}
+                </select>
+              </div>
+              <div className="obsSpanTable">
+                <div className="obsSpanTableHead"><span>Span</span><span>Kind</span><span>Duration</span><span>Tokens</span><span>Privacy</span></div>
+                {visibleSpans.map((item, index) => (
+                  <button className={item.id === selectedEvent.id ? "selected" : ""} key={item.id} onClick={() => selectEvent(item)} type="button">
+                    <span style={{ paddingLeft: item.parentId ? 18 : 0 }}><i>{index + 1}</i><strong>{item.title}</strong><small>{item.id}</small></span>
+                    <code className={`kind-${item.kind.toLowerCase()}`}>{item.kind}</code>
+                    <span>{item.durationMs >= 1000 ? `${(item.durationMs / 1000).toFixed(2)}s` : `${item.durationMs}ms`}</span>
+                    <span>{item.tokens ?? "—"}</span>
+                    <span>{Object.values(item.attributes).includes("__REDACTED__") ? "redacted" : "metadata"}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="obsKindCoverage">
+                {kindLabels.map((item) => (
+                  <div key={item.kind}><code>{item.kind}</code><strong>{run.events.filter((eventItem) => eventItem.kind === item.kind).length}</strong><span>{item.description}</span></div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
+
+          {tab === "report" ? (
+            <div className="obsPanelView obsReport">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">Incident narrative</span><h2>Security incident report</h2></div>
+                <button className="obsInlineButton" onClick={exportReport} type="button">Download Markdown</button>
+              </div>
+              <article className="obsReportDocument">
+                <header><span>Generated by {run.report.generatedBy}</span><code>{run.traceId}</code></header>
+                <h2>{run.name}</h2>
+                <p className="lead">{run.report.summary}</p>
+                <h3>Breach path</h3>
+                <ol>{run.report.breachPath.map((item) => <li key={item}>{item}</li>)}</ol>
+                <h3>Recommended controls</h3>
+                <ul>{run.report.recommendations.map((item) => <li key={item}>{item}</li>)}</ul>
+              </article>
+              <aside className="obsSimilar">
+                <span className="obsEyebrow">Similar incidents</span>
+                <h3>Pattern matches</h3>
+                <div><strong>Untrusted source → protected read</strong><span>0.91 match · local patterns</span></div>
+                <div><strong>External action without approval</strong><span>0.78 match · local patterns</span></div>
+                <div><strong>Cross-agent handoff escalation</strong><span>0.62 match · Moss unavailable</span></div>
+              </aside>
+            </div>
+          ) : null}
+
+          {tab === "compare" ? (
+            <div className="obsPanelView">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">Counterfactual review</span><h2>Observed vs guardrailed</h2></div>
+                <span className="obsPanelNote">Synchronized policy comparison</span>
+              </div>
+              <div className="obsCompare">
+                {[
+                  { title: "Observed run", tone: "unsafe", events: vendorEvents },
+                  { title: "Guardrailed run", tone: "safe", events: safeEvents },
+                ].map((column) => (
+                  <article className={column.tone} key={column.title}>
+                    <header><h3>{column.title}</h3><span>{column.tone === "unsafe" ? "boundary crossed" : "contained"}</span></header>
+                    <div>
+                      {column.events.map((item, index) => (
+                        <div className="obsCompareStep" key={item.id}>
+                          <span>{index + 1}</span>
+                          <div><strong>{item.title}</strong><small>{item.summary}</small></div>
+                          <code className={item.decision}>{item.decision}</code>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {tab === "instrumentation" ? (
+            <div className="obsPanelView">
+              <div className="obsSectionHeader">
+                <div><span className="obsEyebrow">First-party instrumentation</span><h2>SDK and privacy controls</h2></div>
+                <span className="obsPanelNote">No Arize runtime dependency</span>
+              </div>
+              <div className="obsInstrumentation">
+                <section className="obsCodeCard">
+                  <header><span>TypeScript</span><code>@agent-breach/instrumentation-openai-agents</code></header>
+                  <pre>{`const instrumentation = new OpenAIAgentsInstrumentation({
+  exclusiveProcessor: false,
+  traceConfig: { hideInputs: true, hideOutputs: true }
+});
+
+instrumentation.manuallyInstrument(agents);`}</pre>
+                  <footer>Exclusive and additive processor registration supported.</footer>
+                </section>
+                <section className="obsCodeCard">
+                  <header><span>Python</span><code>agent_breach_replay.openai_agents</code></header>
+                  <pre>{`instrumentor = OpenAIAgentsInstrumentor(
+  exclusive_processor=False,
+  trace_config=TraceConfig(hide_inputs=True)
+)
+
+instrumentor.instrument(agents)`}</pre>
+                  <footer>Generation, tool, handoff, guardrail, and realtime spans.</footer>
+                </section>
+                <section className="obsPrivacyControls">
+                  <header><span className="obsEyebrow">TraceConfig</span><h3>Privacy controls</h3></header>
+                  {Object.entries(privacy).map(([key, value]) => (
+                    <label key={key}><span><strong>{key}</strong><small>OPENINFERENCE_{key.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}</small></span><input checked={value} onChange={() => setPrivacy((current) => ({ ...current, [key]: !value }))} type="checkbox" /></label>
+                  ))}
+                </section>
+                <section className="obsRuntimeStatus">
+                  <header><span className="obsEyebrow">Feature surface</span><h3>Instrumentation coverage</h3></header>
+                  {kindLabels.map((item) => <div key={item.kind}><code>{item.kind}</code><span>{item.description}</span><b>ready</b></div>)}
+                  <div><code>CONTEXT</code><span>Session, user, metadata, tags, suppression</span><b>ready</b></div>
+                  <div><code>EXPORT</code><span>Memory exporter and OpenAI trace conversion</span><b>ready</b></div>
+                </section>
+              </div>
+            </div>
+          ) : null}
         </section>
 
-        <aside className="detailPanel glassPanel">
-          <code>STEP {stepIndex + 1} OF {steps.length}</code>
-          <h2>{current.title}</h2>
-          <p>{current.desc}</p>
-          <div className={cx("policyCard", current.decision?.toLowerCase())}>
-            <span>POLICY DECISION</span>
-            <strong>{current.decision ?? "OBSERVED"}</strong>
-          </div>
-          <div className="labelRow">
-            {current.labels.map((label) => (
-              <code key={`${label.k}-${label.v}`}>{label.k}: {label.v}</code>
-            ))}
-          </div>
-          <pre>{JSON.stringify(current.event, null, 2)}</pre>
-          <footer>Metadata-only capture. Redacted previews. Use ← → keys to step.</footer>
-        </aside>
+        {tab === "replay" || tab === "spans" ? (
+          <aside className="obsInspector">
+            <div className="obsInspectorHeader">
+              <span className="obsEyebrow">Selected span</span>
+              <code>{selectedEvent.id}</code>
+            </div>
+            <div className="obsInspectorTitle">
+              <span className={`kind-${selectedEvent.kind.toLowerCase()}`}>{selectedEvent.kind}</span>
+              <h2>{selectedEvent.title}</h2>
+              <p>{selectedEvent.summary}</p>
+            </div>
+            <dl className="obsInspectorFacts">
+              <div><dt>Actor</dt><dd>{selectedEvent.actor}</dd></div>
+              <div><dt>Trust</dt><dd className={`trust-${selectedEvent.trust}`}>{selectedEvent.trust}</dd></div>
+              <div><dt>Decision</dt><dd>{selectedEvent.decision}</dd></div>
+              <div><dt>Duration</dt><dd>{selectedEvent.durationMs} ms</dd></div>
+              {selectedEvent.tool ? <div><dt>Tool</dt><dd>{selectedEvent.tool}</dd></div> : null}
+              {selectedEvent.target ? <div><dt>Target</dt><dd>{selectedEvent.target}</dd></div> : null}
+            </dl>
+            <div className="obsAttributes">
+              <header><span>Span attributes</span><b>{Object.keys(selectedEvent.attributes).length}</b></header>
+              {Object.entries(selectedEvent.attributes).map(([key, value]) => (
+                <div key={key}><code>{key}</code><span>{String(value)}</span></div>
+              ))}
+            </div>
+            <footer className="obsInspectorFooter">
+              <span>Capture mode</span><strong>{run.captureMode}</strong>
+            </footer>
+          </aside>
+        ) : null}
       </div>
 
       {importOpen ? (
-        <div className="modalBackdrop" onClick={() => setImportOpen(false)}>
-          <section className="importModal" onClick={(event) => event.stopPropagation()}>
-            <div className="modalHeader">
-              <h2>Bring traces into the studio</h2>
-              <button onClick={() => setImportOpen(false)} type="button">Close</button>
+        <div className="obsModalBackdrop" onClick={() => setImportOpen(false)}>
+          <section className="obsImportModal" onClick={(event) => event.stopPropagation()}>
+            <header><div><span className="obsEyebrow">Trace ingestion</span><h2>Import an agent run</h2></div><button onClick={() => setImportOpen(false)} type="button">×</button></header>
+            <p>Upload a SecurityTrace export, an OpenAI Agents trace, or an instrumented span bundle. The studio will build a local span tree immediately.</p>
+            <input
+              accept=".json,.jsonl"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleImport(file);
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
+            <button className="obsDropzone" onClick={() => fileInputRef.current?.click()} type="button">
+              <strong>Choose a JSON trace</strong>
+              <span>SecurityTrace · OpenAI Agents SDK · CompletedSpan[]</span>
+            </button>
+            {importError ? <p className="obsImportError">{importError}</p> : null}
+            <div className="obsImportSources">
+              <div><code>SDK</code><span>TypeScript and Python recorder submissions</span></div>
+              <div><code>OPENAI</code><span>trace_id, parent_id, and span_data exports</span></div>
+              <div><code>LOCAL</code><span>Metadata-only processing in this browser</span></div>
             </div>
-            <div className="modalTabs">
-              {(["sdk", "logs", "proxy"] as const).map((tab) => (
-                <button className={importTab === tab ? "active" : ""} key={tab} onClick={() => setImportTab(tab)} type="button">
-                  {tab === "sdk" ? "SDK" : tab === "logs" ? "Logs upload" : "Proxy"}
-                </button>
-              ))}
-            </div>
-            {importTab === "sdk" ? (
-              <div className="modalBody">
-                <p>Instrument tool boundaries directly with metadata-only capture.</p>
-                <pre>{`npm install @agent-breach/replay\n\nconst trace = createSecurityTrace({\n  captureMode: "metadata-only"\n})`}</pre>
-              </div>
-            ) : null}
-            {importTab === "logs" ? (
-              <div className="modalBody">
-                <input
-                  accept=".json,.jsonl"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) handleFile(file);
-                  }}
-                  ref={fileInputRef}
-                  type="file"
-                />
-                <button className="dropzone" onClick={() => fileInputRef.current?.click()} type="button">
-                  {parsing ? "Parsing trace..." : "Drop or choose .json / .jsonl trace"}
-                </button>
-                <p>Supports OpenAI Agents SDK, LangSmith, LangGraph, and ABR export.</p>
-              </div>
-            ) : null}
-            {importTab === "proxy" ? (
-              <div className="modalBody">
-                <p>Route agent tool calls through an observe/enforce proxy.</p>
-                <pre>{`ABR_PROXY_URL=https://agent-breach.example/proxy\nABR_PROXY_MODE=enforce # observe | enforce`}</pre>
-              </div>
-            ) : null}
           </section>
         </div>
       ) : null}

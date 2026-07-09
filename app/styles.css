@@ -772,3 +772,1598 @@ pre,
     flex: 1;
   }
 }
+
+/* Unified observability studio */
+.obsShell {
+  --obs-bg: #090b0f;
+  --obs-panel: #101319;
+  --obs-panel-2: #141820;
+  --obs-panel-3: #181d26;
+  --obs-line: rgba(255, 255, 255, 0.09);
+  --obs-line-strong: rgba(255, 255, 255, 0.15);
+  --obs-text: rgba(255, 255, 255, 0.94);
+  --obs-muted: rgba(255, 255, 255, 0.58);
+  --obs-faint: rgba(255, 255, 255, 0.34);
+  --obs-violet: #9c83ef;
+  --obs-green: #58c98a;
+  --obs-red: #ef6b6b;
+  --obs-amber: #e9ad57;
+  --obs-blue: #69a7df;
+
+  gap: 10px;
+  padding: 10px;
+  background: var(--obs-bg);
+  color: var(--obs-text);
+}
+
+.obsShell button,
+.obsShell input,
+.obsShell select {
+  color: inherit;
+  font: inherit;
+}
+
+.obsShell button {
+  cursor: pointer;
+}
+
+.obsTopbar {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 62px;
+  padding: 7px 9px;
+  border: 1px solid var(--obs-line);
+  border-radius: 12px;
+  background: rgba(16, 19, 25, 0.96);
+}
+
+.obsBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.obsBrand strong,
+.obsBrand span {
+  display: block;
+}
+
+.obsBrand strong {
+  font-size: 13px;
+}
+
+.obsBrand span {
+  margin-top: 2px;
+  color: var(--obs-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.obsTabs {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.obsTabs button {
+  display: flex;
+  min-height: 35px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--obs-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.obsTabs button:hover,
+.obsTabs button.active {
+  border-color: var(--obs-line);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--obs-text);
+}
+
+.obsTabs button b {
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(239, 107, 107, 0.17);
+  color: #ff9a9a;
+  font-size: 8px;
+}
+
+.obsTopActions {
+  display: flex;
+  gap: 7px;
+}
+
+.obsTopActions button,
+.obsInlineButton {
+  min-height: 35px;
+  padding: 0 12px;
+  border: 1px solid var(--obs-line-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--obs-text);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.obsTopActions button:hover,
+.obsInlineButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.obsTopActions button.primary {
+  border-color: #fff;
+  background: #fff;
+  color: #111318;
+}
+
+.obsWorkspace {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+  gap: 10px;
+}
+
+.obsWorkspace:has(.obsInspector) {
+  grid-template-columns: 248px minmax(0, 1fr) 306px;
+}
+
+.obsRuns,
+.obsMain,
+.obsInspector {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--obs-line);
+  border-radius: 12px;
+  background: var(--obs-panel);
+}
+
+.obsRuns {
+  display: flex;
+  flex-direction: column;
+}
+
+.obsRunsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 12px;
+}
+
+.obsEyebrow {
+  color: var(--obs-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.obsRunsHeader h2,
+.obsSectionHeader h2 {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.obsRunsHeader > button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--obs-text);
+}
+
+.obsSearch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 12px 10px;
+  padding: 0 10px;
+  border: 1px solid var(--obs-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.obsSearch span {
+  color: var(--obs-faint);
+}
+
+.obsSearch input {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 10px;
+}
+
+.obsRunList {
+  display: grid;
+  gap: 6px;
+  min-height: 0;
+  padding: 0 8px 12px;
+  overflow-y: auto;
+}
+
+.obsRunCard {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+}
+
+.obsRunCard:hover,
+.obsRunCard.selected {
+  border-color: var(--obs-line);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.obsRunCard.selected {
+  box-shadow: inset 2px 0 var(--obs-violet);
+}
+
+.obsRunCardTop {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.obsRunCardTop strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsRunCardTop time {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.obsStatusDot,
+.obsLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.obsStatusDot.triggered {
+  background: var(--obs-red);
+  box-shadow: 0 0 10px rgba(239, 107, 107, 0.55);
+}
+
+.obsStatusDot.blocked,
+.obsLiveDot {
+  background: var(--obs-green);
+  box-shadow: 0 0 10px rgba(88, 201, 138, 0.4);
+}
+
+.obsStatusDot.observed {
+  background: var(--obs-blue);
+}
+
+.obsRunCard > p {
+  margin: 0 0 0 15px;
+  color: var(--obs-muted);
+  font-size: 9px;
+}
+
+.obsRunCard > div:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: 15px;
+}
+
+.obsRunCard code {
+  max-width: 136px;
+  overflow: hidden;
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-overflow: ellipsis;
+}
+
+.obsSeverity {
+  display: inline-flex;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.obsSeverity.critical {
+  background: rgba(239, 107, 107, 0.14);
+  color: #ff9696;
+}
+
+.obsSeverity.high {
+  background: rgba(233, 173, 87, 0.14);
+  color: #f2bd73;
+}
+
+.obsSeverity.medium {
+  background: rgba(105, 167, 223, 0.14);
+  color: #8bc0ed;
+}
+
+.obsSeverity.low {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--obs-muted);
+}
+
+.obsUser {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  padding: 12px 14px;
+  border-top: 1px solid var(--obs-line);
+}
+
+.obsUser > span {
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsUser > strong {
+  overflow: hidden;
+  font-size: 9px;
+  text-overflow: ellipsis;
+}
+
+.obsUser > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.obsMain {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.obsRunHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 78px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsBreadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsBreadcrumbs i {
+  opacity: 0.5;
+}
+
+.obsBreadcrumbs code {
+  color: var(--obs-muted);
+}
+
+.obsRunHeader h1 {
+  margin: 6px 0 0;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.obsRunMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.obsRunMeta > span {
+  padding: 5px 8px;
+  border: 1px solid var(--obs-line);
+  border-radius: 999px;
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.obsRunMeta .obsOutcome {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.obsOutcome.triggered {
+  border-color: rgba(239, 107, 107, 0.28);
+  color: #ff9292;
+  background: rgba(239, 107, 107, 0.08);
+}
+
+.obsOutcome.blocked {
+  border-color: rgba(88, 201, 138, 0.28);
+  color: #7bdaa2;
+  background: rgba(88, 201, 138, 0.08);
+}
+
+.obsReplay,
+.obsPanelView {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.obsSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.obsSectionHeader select {
+  min-height: 32px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+  outline: 0;
+  background: var(--obs-panel-2);
+  color: var(--obs-muted);
+  font-size: 9px;
+}
+
+.obsPanelNote {
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsLegend {
+  display: flex;
+  gap: 10px;
+}
+
+.obsLegend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsLegend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.obsLegend i.trusted { background: var(--obs-green); }
+.obsLegend i.untrusted { background: var(--obs-amber); }
+.obsLegend i.protected { background: var(--obs-violet); }
+.obsLegend i.external { background: var(--obs-red); }
+
+.obsFlow {
+  display: flex;
+  min-height: 260px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 30px 12px;
+  border: 1px solid var(--obs-line);
+  border-radius: 11px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    #0c0f14;
+  background-size: 28px 28px;
+}
+
+.obsFlowUnit {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.obsFlowNode {
+  position: relative;
+  display: grid;
+  width: 120px;
+  min-height: 92px;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid var(--obs-line);
+  border-radius: 10px;
+  background: var(--obs-panel-2);
+  text-align: left;
+  opacity: 0.58;
+  transition: opacity 160ms ease, border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.obsFlowNode.visited {
+  opacity: 1;
+}
+
+.obsFlowNode.selected {
+  z-index: 2;
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  transform: translateY(-4px);
+}
+
+.obsFlowNode::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 2px;
+  height: 28px;
+  border-radius: 2px;
+}
+
+.obsFlowNode.trust-trusted::before { background: var(--obs-green); }
+.obsFlowNode.trust-untrusted::before { background: var(--obs-amber); }
+.obsFlowNode.trust-protected::before { background: var(--obs-violet); }
+.obsFlowNode.trust-external::before { background: var(--obs-red); }
+.obsFlowNode.trust-neutral::before { background: var(--obs-blue); }
+
+.obsFlowNode > span {
+  color: var(--obs-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.obsFlowNode > strong {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.obsFlowNode > small {
+  overflow: hidden;
+  color: var(--obs-muted);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsFlowNode > b {
+  position: absolute;
+  top: -7px;
+  right: 8px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--obs-red);
+  color: #fff;
+  font-size: 6px;
+  letter-spacing: 0.07em;
+}
+
+.obsFlowArrow {
+  display: flex;
+  width: 22px;
+  align-items: center;
+  color: var(--obs-faint);
+}
+
+.obsFlowArrow span {
+  width: 100%;
+  height: 1px;
+  background: var(--obs-line-strong);
+}
+
+.obsFlowArrow.visited span {
+  background: var(--obs-violet);
+}
+
+.obsFlowArrow i {
+  margin-left: -2px;
+  font-size: 18px;
+  font-style: normal;
+}
+
+.obsTimeline {
+  display: flex;
+  min-height: 0;
+  flex: 0 0 226px;
+  flex-direction: column;
+  margin-top: 12px;
+  border: 1px solid var(--obs-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.obsPlayback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsPlayback button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--obs-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--obs-muted);
+  font-size: 9px;
+}
+
+.obsPlayback button.play {
+  min-width: 80px;
+  background: #fff;
+  color: #111318;
+  font-weight: 700;
+}
+
+.obsPlayback code {
+  margin-left: auto;
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsTimelineSteps {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  gap: 6px;
+  padding: 9px;
+  overflow-x: auto;
+}
+
+.obsTimelineSteps button {
+  display: grid;
+  min-width: 118px;
+  align-content: start;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--obs-muted);
+  font-size: 8px;
+  text-align: left;
+}
+
+.obsTimelineSteps button span {
+  color: var(--obs-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+}
+
+.obsTimelineSteps button.past {
+  border-color: rgba(156, 131, 239, 0.22);
+}
+
+.obsTimelineSteps button.active {
+  border-color: var(--obs-violet);
+  background: rgba(156, 131, 239, 0.09);
+  color: var(--obs-text);
+}
+
+.obsInspector {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.obsInspectorHeader,
+.obsAttributes > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.obsInspectorHeader {
+  padding: 15px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsInspectorHeader code {
+  max-width: 150px;
+  overflow: hidden;
+  color: var(--obs-muted);
+  font-size: 8px;
+  text-overflow: ellipsis;
+}
+
+.obsInspectorTitle {
+  padding: 17px 15px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsInspectorTitle > span,
+.obsSpanTable code {
+  display: inline-flex;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.kind-agent { background: rgba(105, 167, 223, 0.14); color: #8bc0ed; }
+.kind-llm { background: rgba(156, 131, 239, 0.14); color: #b6a3f3; }
+.kind-tool { background: rgba(233, 173, 87, 0.14); color: #f2bd73; }
+.kind-guardrail { background: rgba(239, 107, 107, 0.14); color: #ff9696; }
+.kind-chain { background: rgba(88, 201, 138, 0.14); color: #7bdaa2; }
+.kind-audio { background: rgba(219, 106, 192, 0.14); color: #e68bd1; }
+.kind-user { background: rgba(255, 255, 255, 0.08); color: #c7cad1; }
+
+.obsInspectorTitle h2 {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.obsInspectorTitle p {
+  margin: 8px 0 0;
+  color: var(--obs-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.obsInspectorFacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 12px 15px;
+  gap: 8px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsInspectorFacts > div {
+  display: grid;
+  gap: 3px;
+}
+
+.obsInspectorFacts dt {
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.obsInspectorFacts dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--obs-text);
+  font-size: 9px;
+  text-overflow: ellipsis;
+}
+
+.obsAttributes {
+  padding: 14px 15px;
+}
+
+.obsAttributes > header {
+  margin-bottom: 8px;
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.obsAttributes > header b {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.obsAttributes > div {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsAttributes code {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.obsAttributes span {
+  overflow-wrap: anywhere;
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.obsInspectorFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 15px;
+  border-top: 1px solid var(--obs-line);
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsInspectorFooter strong {
+  color: var(--obs-green);
+}
+
+/* Findings */
+.obsFindingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.obsFinding,
+.obsDetectorCoverage,
+.obsReportDocument,
+.obsSimilar,
+.obsCodeCard,
+.obsPrivacyControls,
+.obsRuntimeStatus {
+  border: 1px solid var(--obs-line);
+  border-radius: 10px;
+  background: var(--obs-panel-2);
+}
+
+.obsFinding {
+  padding: 15px;
+}
+
+.obsFinding.triggered {
+  box-shadow: inset 2px 0 var(--obs-red);
+}
+
+.obsFinding.blocked {
+  box-shadow: inset 2px 0 var(--obs-green);
+}
+
+.obsFinding header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.obsFinding header code {
+  color: var(--obs-muted);
+  font-size: 7px;
+}
+
+.obsFinding header b {
+  margin-left: auto;
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.obsFinding h3 {
+  margin: 14px 0 0;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.obsFinding p {
+  margin: 7px 0 0;
+  color: var(--obs-muted);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.obsEvidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 14px;
+}
+
+.obsEvidence > span {
+  width: 100%;
+  margin-bottom: 2px;
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.obsEvidence button {
+  padding: 4px 6px;
+  border: 1px solid var(--obs-line);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--obs-muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+}
+
+.obsDetectorCoverage {
+  display: grid;
+  grid-template-columns: auto repeat(4, 1fr);
+  gap: 0;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.obsDetectorCoverage h3 {
+  margin: 0;
+  padding: 13px;
+  border-right: 1px solid var(--obs-line);
+  font-size: 10px;
+}
+
+.obsDetectorCoverage > div {
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  padding: 10px;
+  border-right: 1px solid var(--obs-line);
+}
+
+.obsDetectorCoverage code {
+  font-size: 7px;
+}
+
+.obsDetectorCoverage span {
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.obsDetectorCoverage .triggered { color: var(--obs-red); }
+.obsDetectorCoverage .blocked { color: var(--obs-green); }
+.obsDetectorCoverage .clear { color: var(--obs-faint); }
+
+.obsEmpty {
+  grid-column: 1 / -1;
+  padding: 50px;
+  border: 1px dashed var(--obs-line);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.obsEmpty p {
+  color: var(--obs-muted);
+  font-size: 10px;
+}
+
+/* Spans */
+.obsSpanTable {
+  border: 1px solid var(--obs-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.obsSpanTableHead,
+.obsSpanTable > button {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 86px 72px 58px 74px;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 13px;
+}
+
+.obsSpanTableHead {
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--obs-faint);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.obsSpanTable > button {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--obs-line);
+  background: transparent;
+  color: var(--obs-muted);
+  font-size: 8px;
+  text-align: left;
+}
+
+.obsSpanTable > button:hover,
+.obsSpanTable > button.selected {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.obsSpanTable > button.selected {
+  box-shadow: inset 2px 0 var(--obs-violet);
+}
+
+.obsSpanTable > button > span:first-child {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 2px 6px;
+}
+
+.obsSpanTable > button i {
+  grid-row: 1 / 3;
+  color: var(--obs-faint);
+  font-size: 7px;
+  font-style: normal;
+}
+
+.obsSpanTable > button strong {
+  color: var(--obs-text);
+  font-size: 9px;
+}
+
+.obsSpanTable > button small {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.obsKindCoverage {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.obsKindCoverage > div {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+  background: var(--obs-panel-2);
+}
+
+.obsKindCoverage code {
+  color: var(--obs-muted);
+  font-size: 7px;
+}
+
+.obsKindCoverage strong {
+  font-size: 15px;
+}
+
+.obsKindCoverage span {
+  color: var(--obs-faint);
+  font-size: 6px;
+  line-height: 1.4;
+}
+
+/* Report */
+.obsReport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-content: start;
+  gap: 12px;
+}
+
+.obsReport > .obsSectionHeader {
+  grid-column: 1 / -1;
+}
+
+.obsReportDocument {
+  padding: 22px;
+}
+
+.obsReportDocument > header {
+  display: flex;
+  justify-content: space-between;
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.obsReportDocument h2 {
+  margin: 20px 0 0;
+  font-size: 21px;
+}
+
+.obsReportDocument .lead {
+  margin: 10px 0 0;
+  color: var(--obs-muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.obsReportDocument h3 {
+  margin: 22px 0 8px;
+  font-size: 11px;
+}
+
+.obsReportDocument ol,
+.obsReportDocument ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 19px;
+  color: var(--obs-muted);
+  font-size: 9px;
+}
+
+.obsSimilar {
+  padding: 16px;
+}
+
+.obsSimilar h3 {
+  margin: 6px 0 13px;
+  font-size: 13px;
+}
+
+.obsSimilar > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid var(--obs-line);
+}
+
+.obsSimilar strong {
+  font-size: 9px;
+}
+
+.obsSimilar span {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+/* Compare */
+.obsCompare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.obsCompare > article {
+  overflow: hidden;
+  border: 1px solid var(--obs-line);
+  border-radius: 10px;
+  background: var(--obs-panel-2);
+}
+
+.obsCompare > article.unsafe {
+  box-shadow: inset 0 2px var(--obs-red);
+}
+
+.obsCompare > article.safe {
+  box-shadow: inset 0 2px var(--obs-green);
+}
+
+.obsCompare > article > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsCompare h3 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.obsCompare header span {
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.obsCompareStep {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsCompareStep > span {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.obsCompareStep strong,
+.obsCompareStep small {
+  display: block;
+}
+
+.obsCompareStep strong {
+  font-size: 9px;
+}
+
+.obsCompareStep small {
+  margin-top: 4px;
+  color: var(--obs-muted);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.obsCompareStep code {
+  padding: 3px 5px;
+  border-radius: 4px;
+  color: var(--obs-faint);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 6px;
+  text-transform: uppercase;
+}
+
+.obsCompareStep code.blocked {
+  color: var(--obs-green);
+}
+
+.obsCompareStep code.approval_required {
+  color: var(--obs-amber);
+}
+
+/* Instrumentation */
+.obsInstrumentation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.obsCodeCard,
+.obsPrivacyControls,
+.obsRuntimeStatus {
+  overflow: hidden;
+}
+
+.obsCodeCard header,
+.obsPrivacyControls header,
+.obsRuntimeStatus header {
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsCodeCard header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.obsCodeCard header span {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.obsCodeCard header code {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.obsCodeCard pre {
+  min-height: 154px;
+  margin: 0;
+  padding: 15px;
+  overflow-x: auto;
+  color: #cbd1dc;
+  background: #0b0e13;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.obsCodeCard footer {
+  padding: 10px 15px;
+  color: var(--obs-muted);
+  font-size: 7px;
+}
+
+.obsPrivacyControls header h3,
+.obsRuntimeStatus header h3 {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+
+.obsPrivacyControls > label,
+.obsRuntimeStatus > div {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--obs-line);
+}
+
+.obsPrivacyControls label > span {
+  display: grid;
+  gap: 3px;
+}
+
+.obsPrivacyControls strong {
+  font-size: 9px;
+}
+
+.obsPrivacyControls small {
+  color: var(--obs-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 6px;
+}
+
+.obsPrivacyControls input {
+  width: 30px;
+  accent-color: var(--obs-violet);
+}
+
+.obsRuntimeStatus > div {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+}
+
+.obsRuntimeStatus code {
+  color: var(--obs-violet);
+  font-size: 7px;
+}
+
+.obsRuntimeStatus span {
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.obsRuntimeStatus b {
+  color: var(--obs-green);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+/* Import */
+.obsModalBackdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.obsImportModal {
+  width: min(520px, 100%);
+  padding: 20px;
+  border: 1px solid var(--obs-line-strong);
+  border-radius: 14px;
+  background: var(--obs-panel);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.obsImportModal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.obsImportModal h2 {
+  margin: 6px 0 0;
+  font-size: 17px;
+}
+
+.obsImportModal > header > button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--obs-muted);
+}
+
+.obsImportModal > p {
+  margin: 14px 0 0;
+  color: var(--obs-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.obsDropzone {
+  display: grid;
+  width: 100%;
+  min-height: 130px;
+  place-content: center;
+  gap: 7px;
+  margin-top: 17px;
+  border: 1px dashed var(--obs-line-strong);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
+}
+
+.obsDropzone strong {
+  font-size: 11px;
+}
+
+.obsDropzone span {
+  color: var(--obs-faint);
+  font-size: 8px;
+}
+
+.obsImportError {
+  padding: 9px;
+  border: 1px solid rgba(239, 107, 107, 0.28);
+  border-radius: 7px;
+  color: #ff9696 !important;
+  background: rgba(239, 107, 107, 0.08);
+  font-size: 9px !important;
+}
+
+.obsImportSources {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.obsImportSources > div {
+  display: grid;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid var(--obs-line);
+  border-radius: 7px;
+}
+
+.obsImportSources code {
+  color: var(--obs-violet);
+  font-size: 7px;
+}
+
+.obsImportSources span {
+  color: var(--obs-faint);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1280px) {
+  .obsTopbar {
+    grid-template-columns: 210px minmax(0, 1fr) auto;
+  }
+
+  .obsTabs button {
+    padding-inline: 8px;
+  }
+
+  .obsWorkspace,
+  .obsWorkspace:has(.obsInspector) {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .obsInspector {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .obsShell {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .obsTopbar {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .obsTabs {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .obsTopActions {
+    margin-left: auto;
+  }
+
+  .obsWorkspace,
+  .obsWorkspace:has(.obsInspector) {
+    grid-template-columns: 1fr;
+  }
+
+  .obsRuns {
+    max-height: 300px;
+  }
+
+  .obsRunList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .obsUser {
+    display: none;
+  }
+
+  .obsMain {
+    min-height: 720px;
+  }
+
+  .obsFindingGrid,
+  .obsCompare,
+  .obsInstrumentation,
+  .obsReport {
+    grid-template-columns: 1fr;
+  }
+
+  .obsReport > .obsSectionHeader {
+    grid-column: 1;
+  }
+
+  .obsKindCoverage {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .obsShell {
+    padding: 6px;
+  }
+
+  .obsBrand span,
+  .obsTopActions button:first-child {
+    display: none;
+  }
+
+  .obsRunList,
+  .obsFindingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .obsRunHeader,
+  .obsSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .obsRunMeta {
+    justify-content: flex-start;
+  }
+
+  .obsFlow {
+    min-height: 220px;
+  }
+
+  .obsDetectorCoverage,
+  .obsKindCoverage,
+  .obsImportSources {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .obsDetectorCoverage h3 {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 1px solid var(--obs-line);
+  }
+
+  .obsSpanTable {
+    overflow-x: auto;
+  }
+
+  .obsSpanTableHead,
+  .obsSpanTable > button {
+    min-width: 650px;
+  }
+}

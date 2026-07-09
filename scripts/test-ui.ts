@@ -94,6 +94,12 @@ async function testStudioPage() {
   record("studio status 200", response.status === 200, `got ${response.status}`);
   record("studio shell present", html.includes("studioShell"));
   record("studio incident list", html.includes("Vendor email exfiltration"));
+  record("studio replay view", html.includes("Execution path"));
+  record("studio findings tab", html.includes("Findings"));
+  record("studio spans tab", html.includes("Spans"));
+  record("studio report tab", html.includes("Report"));
+  record("studio compare tab", html.includes("Compare"));
+  record("studio instrumentation tab", html.includes("Instrumentation"));
   record("studio no marketing wrapper", !html.includes("marketingPage"));
   record("studio no error shell", !html.includes("__next_error__"));
 }
