@@ -1,16 +1,5 @@
-import { redirect } from "next/navigation";
-import StudioClient from "@/app/studio-client";
-import { createClient } from "@/utils/supabase/server";
+import LandingClient from "@/app/landing-client";
 
-export default async function Page() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  return <StudioClient userEmail={user.email ?? "authenticated user"} />;
+export default function Page() {
+  return <LandingClient />;
 }

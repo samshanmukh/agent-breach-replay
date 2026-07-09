@@ -1,0 +1,527 @@
+body:has(.landingBody) {
+  overflow: auto;
+  background: #f4f5f7;
+  color: #15181f;
+}
+
+.landingBody {
+  --landing-bg: #f4f5f7;
+  --landing-surface: #ffffff;
+  --landing-border: #e6e8ee;
+  --landing-border-strong: #d7dbe3;
+  --landing-ink: #15181f;
+  --landing-muted: #667085;
+  --landing-faint: #98a2b3;
+  --landing-accent: #111111;
+  --landing-accent-soft: #f2f4f7;
+  --landing-purple: #8b5cf6;
+  --landing-orange: #f97316;
+  --landing-green: #22c55e;
+  --landing-red: #ef4444;
+  --landing-blue: #3b82f6;
+  --landing-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 24px rgba(16, 24, 40, 0.06);
+
+  margin: 0;
+  min-height: 100vh;
+  overflow: auto;
+  background: var(--landing-bg);
+  color: var(--landing-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.landingShell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.landingSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px 14px;
+  border-right: 1px solid var(--landing-border);
+  background: var(--landing-surface);
+}
+
+.landingProfile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--landing-border);
+  border-radius: 12px;
+  background: var(--landing-surface);
+}
+
+.landingAvatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #111 0%, #4b5563 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.landingProfile strong,
+.landingProfile span {
+  display: block;
+}
+
+.landingProfile strong {
+  font-size: 13px;
+}
+
+.landingProfile span {
+  color: var(--landing-muted);
+  font-size: 12px;
+}
+
+.landingNavSection {
+  display: grid;
+  gap: 4px;
+}
+
+.landingNavLabel {
+  padding: 0 10px;
+  color: var(--landing-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landingNavItem,
+.landingNavItemActive {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--landing-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.landingNavItem:hover {
+  background: var(--landing-accent-soft);
+  color: var(--landing-ink);
+}
+
+.landingNavItemActive {
+  border-color: var(--landing-border);
+  background: #fafbfc;
+  color: var(--landing-ink);
+  font-weight: 600;
+}
+
+.landingNavDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--landing-border-strong);
+}
+
+.landingNavItemActive .landingNavDot {
+  background: var(--landing-accent);
+}
+
+.landingSidebarFooter {
+  margin-top: auto;
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--landing-border);
+}
+
+.landingMain {
+  padding: 22px 24px 40px;
+}
+
+.landingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.landingHeader h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.landingHeader p {
+  margin: 6px 0 0;
+  color: var(--landing-muted);
+  font-size: 14px;
+}
+
+.landingHeaderActions {
+  display: flex;
+  gap: 10px;
+}
+
+.landingButton,
+.landingButtonPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--landing-border);
+  border-radius: 10px;
+  background: var(--landing-surface);
+  color: var(--landing-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.landingButton:hover {
+  background: var(--landing-accent-soft);
+}
+
+.landingButtonPrimary {
+  border-color: var(--landing-accent);
+  background: var(--landing-accent);
+  color: #fff;
+}
+
+.landingButtonPrimary:hover {
+  background: #2b2f36;
+}
+
+.landingTabs {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--landing-border);
+  border-radius: 12px;
+  background: var(--landing-surface);
+}
+
+.landingTab,
+.landingTabActive {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--landing-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.landingTabActive {
+  border-color: var(--landing-border);
+  background: #fafbfc;
+  color: var(--landing-ink);
+}
+
+.landingMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.landingMetricCard {
+  padding: 14px 16px;
+  border: 1px solid var(--landing-border);
+  border-radius: 14px;
+  background: var(--landing-surface);
+  box-shadow: var(--landing-shadow);
+}
+
+.landingMetricCard span {
+  display: block;
+  color: var(--landing-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.landingMetricCard strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.landingMetricCard em {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--landing-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.landingGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 16px;
+}
+
+.landingPanel {
+  border: 1px solid var(--landing-border);
+  border-radius: 16px;
+  background: var(--landing-surface);
+  box-shadow: var(--landing-shadow);
+}
+
+.landingPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.landingPanelHeader h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.landingPanelHeader p {
+  margin: 4px 0 0;
+  color: var(--landing-muted);
+  font-size: 12px;
+}
+
+.landingPanelBody {
+  padding: 18px;
+}
+
+.landingStoryTree {
+  display: grid;
+  gap: 0;
+}
+
+.landingTreeNode {
+  position: relative;
+  padding-left: 22px;
+}
+
+.landingTreeNode::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 7px;
+  width: 10px;
+  height: 1px;
+  background: var(--landing-border-strong);
+}
+
+.landingTreeRoot > .landingTreeItem::before {
+  display: none;
+}
+
+.landingTreeItem {
+  position: relative;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--landing-border);
+  border-radius: 14px;
+  background: #fcfcfd;
+}
+
+.landingTreeItem::after {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: -15px;
+  width: 1px;
+  height: calc(100% + 10px);
+  background: var(--landing-border-strong);
+}
+
+.landingTreeNode:last-child > .landingTreeItem::after {
+  display: none;
+}
+
+.landingTreeTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.landingTreeTop strong {
+  font-size: 14px;
+}
+
+.landingTreeTop p {
+  margin: 6px 0 0;
+  color: var(--landing-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.landingStepBadge {
+  flex-shrink: 0;
+  min-width: 54px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.landingStepBadge.purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #6d28d9;
+}
+
+.landingStepBadge.orange {
+  background: rgba(249, 115, 22, 0.12);
+  color: #c2410c;
+}
+
+.landingStepBadge.green {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.landingStepBadge.red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.landingStepBadge.blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.landingChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.landingChip {
+  padding: 5px 10px;
+  border: 1px solid var(--landing-border);
+  border-radius: 999px;
+  background: var(--landing-surface);
+  color: var(--landing-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.landingFlowCard {
+  display: grid;
+  gap: 12px;
+}
+
+.landingFlowStep {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.landingFlowIndex {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--landing-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.landingFlowStep strong {
+  display: block;
+  font-size: 14px;
+}
+
+.landingFlowStep p {
+  margin: 4px 0 0;
+  color: var(--landing-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.landingCodeBlock {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--landing-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #334155;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.landingLegend {
+  display: grid;
+  gap: 10px;
+}
+
+.landingLegendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--landing-border);
+  border-radius: 12px;
+  background: #fafbfc;
+  font-size: 13px;
+}
+
+.landingLegendItem span {
+  color: var(--landing-muted);
+}
+
+.landingLegendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.landingHeroNote {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--landing-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: var(--landing-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .landingShell {
+    grid-template-columns: 1fr;
+  }
+
+  .landingSidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--landing-border);
+  }
+
+  .landingMetrics,
+  .landingGrid {
+    grid-template-columns: 1fr;
+  }
+}

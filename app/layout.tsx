@@ -3,7 +3,8 @@ import "./styles.css";
 
 export const metadata: Metadata = {
   title: "Agent Breach Replay",
-  description: "A visual replay studio for AI-agent security failures.",
+  description:
+    "Security observability and replay studio for tool-using AI agents.",
 };
 
 export default function RootLayout({

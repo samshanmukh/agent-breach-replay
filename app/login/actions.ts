@@ -17,7 +17,7 @@ export async function signInWithEmail(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/");
+  redirect("/studio");
 }
 
 export async function signUpWithEmail(formData: FormData) {
