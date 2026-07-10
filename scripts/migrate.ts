@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import postgres from "postgres";
 import { loadEnvFiles } from "./load-env";
 
@@ -17,18 +17,26 @@ const sql = postgres(databaseUrl, {
   connect_timeout: 20,
 });
 
-const migration = readFileSync("migrations/001_initial.sql", "utf8");
-const statements = migration
-  .split(/;\s*(?:\n|$)/)
-  .map((statement) => statement.trim())
-  .filter(Boolean);
-
 async function main() {
   try {
-    for (const statement of statements) {
-      await sql.unsafe(statement);
+    const files = readdirSync("migrations")
+      .filter((file) => file.endsWith(".sql"))
+      .sort();
+    let applied = 0;
+
+    for (const file of files) {
+      const statements = readFileSync(`migrations/${file}`, "utf8")
+        .split(/;\s*(?:\n|$)/)
+        .map((statement) => statement.trim())
+        .filter(Boolean);
+
+      for (const statement of statements) {
+        await sql.unsafe(statement);
+        applied += 1;
+      }
+      console.log(`applied ${file} (${statements.length} statements)`);
     }
-    console.log(`applied ${statements.length} migration statements`);
+    console.log(`applied ${applied} migration statements`);
   } finally {
     await sql.end();
   }

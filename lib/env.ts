@@ -1,3 +1,5 @@
+import { isProjectApiKeyValid } from "@/lib/security-controls";
+
 export function requireEnv(name: string) {
   const value = process.env[name];
   if (!value) {
@@ -14,12 +16,17 @@ export function isApiKeyConfigured() {
   return Boolean(process.env.AGENT_BREACH_API_KEY);
 }
 
-export function assertApiKey(request: Request) {
+export function assertApiKey(
+  request: Request,
+  scope: "ingest" | "read" | "simulate" | "approve" = "ingest",
+) {
   const configuredKey = process.env.AGENT_BREACH_API_KEY;
-  if (!configuredKey) return;
-
   const providedKey = request.headers.get("x-agent-breach-key");
-  if (providedKey !== configuredKey) {
+  if (!configuredKey && !providedKey) return;
+  if (
+    providedKey !== configuredKey &&
+    !(providedKey && isProjectApiKeyValid(providedKey, scope))
+  ) {
     throw new Error("Unauthorized");
   }
 }

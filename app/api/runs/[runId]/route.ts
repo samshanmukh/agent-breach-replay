@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ runId: string }> },
 ) {
   try {
-    assertApiKey(request);
+    assertApiKey(request, "read");
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -4,7 +4,7 @@ import { listRuns } from "@/lib/store";
 
 export async function GET(request: Request) {
   try {
-    assertApiKey(request);
+    assertApiKey(request, "read");
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
