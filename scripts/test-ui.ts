@@ -97,6 +97,8 @@ async function testStudioPage() {
   record("studio shell present", html.includes("studioShell"));
   record("studio incident list", html.includes("Vendor email exfiltration"));
   record("studio replay view", html.includes("Execution path"));
+  record("studio interactive graph", html.includes("interactiveGraph"));
+  record("studio graph reset control", html.includes("Reset layout"));
   record("studio findings tab", html.includes("Findings"));
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));

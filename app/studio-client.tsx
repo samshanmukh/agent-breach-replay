@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReplayGraph from "@/app/replay-graph";
 
 type StudioTab =
   | "replay"
@@ -1010,33 +1011,15 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                   ))}
                 </div>
               </div>
-              <div className="obsFlow">
-                {run.events.map((item, index) => (
-                  <div className="obsFlowUnit" key={item.id}>
-                    <button
-                      className={cx(
-                        "obsFlowNode",
-                        `trust-${item.trust}`,
-                        index <= stepIndex && "visited",
-                        item.id === selectedEvent.id && "selected",
-                      )}
-                      onClick={() => selectEvent(item)}
-                      type="button"
-                    >
-                      <span>{item.kind}</span>
-                      <strong>{item.title}</strong>
-                      <small>{item.tool ?? item.actor}</small>
-                      {item.decision === "blocked" ? <b>BLOCKED</b> : null}
-                    </button>
-                    {index < run.events.length - 1 ? (
-                      <div className={cx("obsFlowArrow", index < stepIndex && "visited")}>
-                        <span />
-                        <i>›</i>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+              <ReplayGraph
+                events={run.events}
+                onSelect={(item) => {
+                  const selected = run.events.find((eventItem) => eventItem.id === item.id);
+                  if (selected) selectEvent(selected);
+                }}
+                selectedId={selectedEvent.id}
+                visitedIds={new Set(run.events.slice(0, stepIndex + 1).map((item) => item.id))}
+              />
               <div className="obsTimeline">
                 <div className="obsPlayback">
                   <button onClick={() => {

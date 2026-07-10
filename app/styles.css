@@ -1270,6 +1270,228 @@ pre,
 .obsLegend i.protected { background: var(--obs-violet); }
 .obsLegend i.external { background: var(--obs-red); }
 
+.interactiveGraph {
+  overflow: hidden;
+  border: 1px solid var(--obs-line);
+  border-radius: 11px;
+  background: #0c0f14;
+}
+
+.interactiveGraphToolbar {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--obs-line);
+  background: var(--obs-panel-2);
+}
+
+.interactiveGraphToolbar > div:first-child span {
+  color: var(--obs-faint);
+  font-size: 7px;
+}
+
+.interactiveGraphToolbar > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.interactiveGraphToolbar button {
+  min-width: 27px;
+  min-height: 27px;
+  padding: 0 8px;
+  border: 1px solid var(--obs-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--obs-muted);
+  font-size: 8px;
+}
+
+.interactiveGraphToolbar button:hover {
+  border-color: var(--obs-line-strong);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--obs-text);
+}
+
+.interactiveGraphToolbar code {
+  min-width: 38px;
+  color: var(--obs-faint);
+  font-size: 7px;
+  text-align: center;
+}
+
+.interactiveGraphViewport {
+  position: relative;
+  height: 340px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.095) 1px, transparent 1px),
+    #0c0f14;
+  background-size: 22px 22px;
+}
+
+.interactiveGraphViewport.panning {
+  cursor: grabbing;
+}
+
+.interactiveGraphViewport:fullscreen {
+  height: 100vh;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.095) 1px, transparent 1px),
+    #0c0f14;
+  background-size: 22px 22px;
+}
+
+.interactiveGraphCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.interactiveGraphEdges {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+.interactiveGraphEdges path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  transition: color 160ms ease, stroke-width 160ms ease;
+}
+
+.interactiveGraphEdges path.visited {
+  color: rgba(156, 131, 239, 0.7);
+}
+
+.interactiveGraphEdges path.selected {
+  color: var(--obs-red);
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+}
+
+.interactiveGraphNode {
+  position: absolute;
+  display: grid;
+  width: 154px;
+  min-height: 86px;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 1px solid var(--obs-line-strong);
+  border-radius: 10px;
+  background: rgba(20, 24, 32, 0.97);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  color: var(--obs-text);
+  cursor: grab;
+  opacity: 0.64;
+  text-align: left;
+  user-select: none;
+  touch-action: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+
+.interactiveGraphNode:active {
+  cursor: grabbing;
+}
+
+.interactiveGraphNode.visited {
+  opacity: 1;
+}
+
+.interactiveGraphNode.selected {
+  z-index: 3;
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06),
+    0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.interactiveGraphNode::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  left: 0;
+  width: 2px;
+  height: 31px;
+  border-radius: 2px;
+}
+
+.interactiveGraphNode.trust-trusted::before { background: var(--obs-green); }
+.interactiveGraphNode.trust-untrusted::before { background: var(--obs-amber); }
+.interactiveGraphNode.trust-protected::before { background: var(--obs-violet); }
+.interactiveGraphNode.trust-external::before { background: var(--obs-red); }
+.interactiveGraphNode.trust-neutral::before { background: var(--obs-blue); }
+
+.interactiveGraphNode > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.interactiveGraphNode code {
+  color: var(--obs-faint);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.interactiveGraphNode i {
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--obs-muted);
+  font-size: 6px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.interactiveGraphNode strong {
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interactiveGraphNode small {
+  overflow: hidden;
+  color: var(--obs-muted);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interactiveGraphNode > b {
+  position: absolute;
+  right: 8px;
+  bottom: -7px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--obs-red);
+  color: #fff;
+  font-size: 6px;
+  letter-spacing: 0.06em;
+}
+
+.interactiveGraphNode > b.approval {
+  background: var(--obs-amber);
+  color: #17120b;
+}
+
 .obsFlow {
   display: flex;
   min-height: 260px;
