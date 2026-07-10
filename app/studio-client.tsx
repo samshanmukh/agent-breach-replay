@@ -1012,11 +1012,14 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                 </div>
               </div>
               <ReplayGraph
+                currentStep={stepIndex}
                 events={run.events}
                 onSelect={(item) => {
                   const selected = run.events.find((eventItem) => eventItem.id === item.id);
                   if (selected) selectEvent(selected);
                 }}
+                onTogglePlay={() => setPlaying((value) => !value)}
+                playing={playing}
                 selectedId={selectedEvent.id}
                 visitedIds={new Set(run.events.slice(0, stepIndex + 1).map((item) => item.id))}
               />

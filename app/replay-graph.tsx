@@ -90,11 +90,17 @@ export default function ReplayGraph({
   selectedId,
   visitedIds,
   onSelect,
+  playing,
+  onTogglePlay,
+  currentStep,
 }: {
   events: ReplayGraphEvent[];
   selectedId: string;
   visitedIds: Set<string>;
   onSelect: (event: ReplayGraphEvent) => void;
+  playing: boolean;
+  onTogglePlay: () => void;
+  currentStep: number;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [positions, setPositions] = useState(() => initialLayout(events));
@@ -254,6 +260,17 @@ export default function ReplayGraph({
           <span>Drag nodes to reorganize · drag canvas to pan · scroll to zoom</span>
         </div>
         <div>
+          <button
+            className={`interactiveGraphPlay${playing ? " playing" : ""}`}
+            onClick={onTogglePlay}
+            type="button"
+          >
+            <span>{playing ? "Ⅱ" : "▶"}</span>
+            {playing ? "Pause" : "Play"}
+          </button>
+          <code className="interactiveGraphStep">
+            {currentStep + 1}/{events.length}
+          </code>
           <button onClick={() => zoom(transform.scale - 0.15)} type="button" aria-label="Zoom out">−</button>
           <code>{Math.round(transform.scale * 100)}%</code>
           <button onClick={() => zoom(transform.scale + 0.15)} type="button" aria-label="Zoom in">+</button>

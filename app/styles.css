@@ -1316,11 +1316,42 @@ pre,
   color: var(--obs-text);
 }
 
+.interactiveGraphToolbar button.interactiveGraphPlay {
+  display: inline-flex;
+  min-width: 66px;
+  align-items: center;
+  gap: 6px;
+  border-color: #fff;
+  background: #fff;
+  color: #111318;
+  font-weight: 750;
+}
+
+.interactiveGraphToolbar button.interactiveGraphPlay:hover {
+  background: #e9ebef;
+  color: #111318;
+}
+
+.interactiveGraphToolbar button.interactiveGraphPlay.playing {
+  border-color: rgba(156, 131, 239, 0.55);
+  background: rgba(156, 131, 239, 0.16);
+  color: #c7b9f7;
+}
+
+.interactiveGraphPlay > span {
+  font-size: 7px;
+}
+
 .interactiveGraphToolbar code {
   min-width: 38px;
   color: var(--obs-faint);
   font-size: 7px;
   text-align: center;
+}
+
+.interactiveGraphToolbar code.interactiveGraphStep {
+  min-width: 28px;
+  color: var(--obs-muted);
 }
 
 .interactiveGraphViewport {
