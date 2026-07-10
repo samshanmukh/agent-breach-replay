@@ -117,6 +117,33 @@ const storySteps: StoryStep[] = [
       "The studio reconstructs source → influence → model → tool → boundary → violation, then compares the observed run with a guardrailed path.",
     features: ["timeline replay", "policy comparison", "incident report"],
   },
+  {
+    number: "12",
+    phase: "prevent",
+    tone: "violet",
+    title: "Simulate policy changes",
+    description:
+      "Editable rules change tool decisions on a copied trace, rerun detectors, and show the difference before a policy is deployed.",
+    features: ["what-if rules", "decision diff", "detector rerun", "policy versions"],
+  },
+  {
+    number: "13",
+    phase: "prevent",
+    tone: "green",
+    title: "Route actions into human approval",
+    description:
+      "External actions marked approval_required enter an operational inbox with evidence, reviewer decisions, and audit history.",
+    features: ["approval inbox", "approve", "deny", "review evidence"],
+  },
+  {
+    number: "14",
+    phase: "prevent",
+    tone: "blue",
+    title: "Enforce production controls",
+    description:
+      "Project-scoped keys, capture-mode retention, runtime defaults, role checks, and append-only audit events harden the workflow.",
+    features: ["scoped API keys", "retention", "RBAC", "audit log"],
+  },
 ];
 
 const branchCards = [
@@ -142,7 +169,7 @@ const branchCards = [
 
 const metrics = [
   ["7", "semantic span kinds"],
-  ["11", "trace-to-prevention steps"],
+  ["14", "trace-to-prevention steps"],
   ["10+", "privacy controls"],
   ["4", "security detectors"],
 ];
@@ -177,6 +204,21 @@ const studioCapabilities = [
     number: "06",
     title: "Instrumentation console",
     description: "Use TypeScript and Python setup examples, live privacy toggles, and feature coverage status.",
+  },
+  {
+    number: "07",
+    title: "Policy simulator",
+    description: "Edit trust-aware rules and compare detector results before and after each decision change.",
+  },
+  {
+    number: "08",
+    title: "Approval inbox",
+    description: "Review external actions with linked trace evidence, then approve or deny with an audited note.",
+  },
+  {
+    number: "09",
+    title: "Production controls",
+    description: "Manage scoped API keys, retention windows, runtime enforcement defaults, and audit activity.",
   },
 ];
 

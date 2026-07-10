@@ -10,6 +10,8 @@
 - Phase 5b: Local OpenAI Agents instrumentation package with OpenInference-compatible span semantics (TypeScript + Python)
 - Phase 5c: Unified observability studio with replay, findings, span explorer,
   reports, guardrail comparison, instrumentation controls, and JSON trace import
+- Phase 5d: Real Studio ingestion, runnable OpenAI Agents example, policy
+  simulation, approval inbox, scoped API keys, retention settings, and audit log
 - Phase 6: Release documentation and verification commands
 - Production layer: Postgres migration, API-key protected ingestion routes,
   run retrieval routes, health check route, Supabase auth-protected studio,
@@ -18,7 +20,7 @@
 ## Still Needed For Production
 
 - Apply Postgres migration in a managed database
-- Org/project membership and role-based permissions
+- Database-backed org/project membership and role administration
 - Tune Moss indexing/query settings against production incident data
 - Real OpenAI report evaluation and prompt hardening
 - Published npm package

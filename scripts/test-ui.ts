@@ -1,3 +1,5 @@
+export {};
+
 const BASE_URL = process.env.UI_TEST_BASE_URL ?? "http://localhost:3010";
 
 type CheckResult = {
@@ -99,6 +101,9 @@ async function testStudioPage() {
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));
   record("studio compare tab", html.includes("Compare"));
+  record("studio policy tab", html.includes("Policy"));
+  record("studio approvals tab", html.includes("Approvals"));
+  record("studio controls tab", html.includes("Controls"));
   record("studio instrumentation tab", html.includes("Instrumentation"));
   record("studio no marketing wrapper", !html.includes("marketingPage"));
   record("studio no error shell", !html.includes("__next_error__"));
