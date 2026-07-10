@@ -127,6 +127,17 @@ async function main() {
   });
   assert(key.secret.startsWith("abr_"), "control API should return key once");
 
+  const machineRead = await fetch(
+    `${baseUrl}/api/runs?projectId=local-demo`,
+    { headers: { "x-agent-breach-key": key.secret } },
+  );
+  assert(machineRead.ok, "scoped project key should authorize read API");
+
+  const wrongKey = await fetch(`${baseUrl}/api/runs?projectId=local-demo`, {
+    headers: { "x-agent-breach-key": "abr_invalid" },
+  });
+  assert(wrongKey.status === 401, "invalid project key should be rejected");
+
   const audit = await json("/api/studio/audit?projectId=local-demo");
   assert(
     audit.audit.some(
