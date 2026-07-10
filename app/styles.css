@@ -1381,6 +1381,82 @@ pre,
   text-align: center;
 }
 
+.interactiveGraphStory {
+  position: absolute;
+  z-index: 7;
+  right: 12px;
+  bottom: 12px;
+  width: min(300px, calc(100% - 24px));
+  padding: 13px 14px;
+  overflow: hidden;
+  border: 1px solid var(--obs-line-strong);
+  border-radius: 9px;
+  background: rgba(16, 19, 25, 0.94);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.interactiveGraphStory::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--obs-blue);
+}
+
+.interactiveGraphStory.trust-trusted::before { background: var(--obs-green); }
+.interactiveGraphStory.trust-untrusted::before { background: var(--obs-amber); }
+.interactiveGraphStory.trust-protected::before { background: var(--obs-violet); }
+.interactiveGraphStory.trust-external::before { background: var(--obs-red); }
+
+.interactiveGraphStory header,
+.interactiveGraphStory footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.interactiveGraphStory header span,
+.interactiveGraphStory header code {
+  color: var(--obs-faint);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.interactiveGraphStory > strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+.interactiveGraphStory > p {
+  margin: 5px 0 0;
+  color: var(--obs-muted);
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.interactiveGraphStory footer {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--obs-line);
+}
+
+.interactiveGraphStory footer span,
+.interactiveGraphStory footer b {
+  color: var(--obs-faint);
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.interactiveGraphStory footer b {
+  color: var(--obs-green);
+}
+
 .interactiveGraphViewport.panning {
   cursor: grabbing;
 }
@@ -1536,6 +1612,15 @@ pre,
 .interactiveGraphNode > b.approval {
   background: var(--obs-amber);
   color: #17120b;
+}
+
+@media (max-width: 620px) {
+  .interactiveGraphStory {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: auto;
+  }
 }
 
 .obsFlow {

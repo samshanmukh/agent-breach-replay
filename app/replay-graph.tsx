@@ -8,6 +8,11 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent,
 } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+} from "framer-motion";
 
 type GraphTrust = "trusted" | "untrusted" | "protected" | "external" | "neutral";
 type GraphDecision = "allowed" | "blocked" | "approval_required" | "observed";
@@ -103,6 +108,7 @@ export default function ReplayGraph({
   currentStep: number;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
   const [positions, setPositions] = useState(() => initialLayout(events));
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const [dragging, setDragging] = useState<{
@@ -150,6 +156,22 @@ export default function ReplayGraph({
     observer.observe(viewport);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    const point = positions[selectedId];
+    const viewport = viewportRef.current;
+    if (!point || !viewport) return;
+    setTransform((current) => ({
+      ...current,
+      x:
+        viewport.clientWidth / 2 -
+        (point.x + node.width / 2) * current.scale,
+      y:
+        viewport.clientHeight / 2 -
+        (point.y + node.height / 2) * current.scale,
+    }));
+  }, [playing, selectedId]);
 
   function zoom(nextScale: number, center?: Point) {
     setTransform((current) => {
@@ -292,13 +314,22 @@ export default function ReplayGraph({
           </button>
           <code>{currentStep + 1}/{events.length}</code>
         </div>
-        <div
+        <motion.div
           className="interactiveGraphCanvas"
           style={{
             width: canvas.width,
             height: canvas.height,
-            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           }}
+          animate={{
+            x: transform.x,
+            y: transform.y,
+            scale: transform.scale,
+          }}
+          transition={
+            reduceMotion || dragging
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 260, damping: 32, mass: 0.7 }
+          }
         >
           <svg
             aria-hidden="true"
@@ -320,25 +351,74 @@ export default function ReplayGraph({
               const selected = selectedId === from.id || selectedId === to.id;
               return (
                 <g key={`${from.id}-${to.id}`}>
-                  <path
+                  <motion.path
                     className={`${visited ? "visited" : ""}${selected ? " selected" : ""}`}
                     d={edgePath(fromPoint, toPoint)}
                     markerEnd="url(#interactive-arrow)"
+                    initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+                    animate={{
+                      pathLength: visited ? 1 : 0.22,
+                      opacity: visited ? 1 : 0.34,
+                    }}
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : {
+                            pathLength: {
+                              duration: selected ? 0.62 : 0.38,
+                              ease: "easeInOut",
+                            },
+                            opacity: { duration: 0.2 },
+                          }
+                    }
                   />
                 </g>
               );
             })}
           </svg>
-          {events.map((event) => {
+          {events.map((event, index) => {
             const point = positions[event.id] ?? { x: 0, y: 0 };
+            const visited = visitedIds.has(event.id);
+            const selected = selectedId === event.id;
             return (
-              <button
+              <motion.button
                 className={[
                   "interactiveGraphNode",
                   `trust-${event.trust}`,
-                  visitedIds.has(event.id) ? "visited" : "",
-                  selectedId === event.id ? "selected" : "",
+                  visited ? "visited" : "",
+                  selected ? "selected" : "",
                 ].filter(Boolean).join(" ")}
+                initial={
+                  reduceMotion
+                    ? false
+                    : { opacity: 0, scale: 0.9, y: 10 }
+                }
+                animate={{
+                  opacity: visited ? 1 : 0.54,
+                  scale: selected ? 1.045 : 1,
+                  y: selected ? -5 : 0,
+                  boxShadow:
+                    selected && playing && !reduceMotion
+                      ? [
+                          "0 0 0 3px rgba(255,255,255,0.06), 0 12px 30px rgba(0,0,0,0.35)",
+                          "0 0 0 7px rgba(156,131,239,0.15), 0 16px 38px rgba(0,0,0,0.42)",
+                          "0 0 0 3px rgba(255,255,255,0.06), 0 12px 30px rgba(0,0,0,0.35)",
+                        ]
+                      : "0 8px 24px rgba(0,0,0,0.24)",
+                }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : {
+                        opacity: { duration: 0.24, delay: index * 0.035 },
+                        scale: { type: "spring", stiffness: 360, damping: 24 },
+                        y: { type: "spring", stiffness: 360, damping: 24 },
+                        boxShadow:
+                          selected && playing
+                            ? { duration: 1.45, repeat: Infinity }
+                            : { duration: 0.2 },
+                      }
+                }
                 key={event.id}
                 onPointerDown={(pointerEvent) =>
                   startNodeDrag(pointerEvent, event.id)
@@ -354,10 +434,37 @@ export default function ReplayGraph({
                 <small>{event.tool ?? event.target ?? event.actor}</small>
                 {event.decision === "blocked" ? <b>BLOCKED</b> : null}
                 {event.decision === "approval_required" ? <b className="approval">APPROVAL</b> : null}
-              </button>
+              </motion.button>
             );
           })}
-        </div>
+        </motion.div>
+        <AnimatePresence mode="wait">
+          {events[currentStep] ? (
+            <motion.aside
+              className={`interactiveGraphStory trust-${events[currentStep].trust}`}
+              key={events[currentStep].id}
+              initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -8, scale: 0.98 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 300, damping: 28 }
+              }
+            >
+              <header>
+                <span>Step {currentStep + 1} of {events.length}</span>
+                <code>{events[currentStep].kind}</code>
+              </header>
+              <strong>{events[currentStep].title}</strong>
+              <p>{events[currentStep].summary}</p>
+              <footer>
+                <span>{events[currentStep].trust}</span>
+                <b>{events[currentStep].decision.replaceAll("_", " ")}</b>
+              </footer>
+            </motion.aside>
+          ) : null}
+        </AnimatePresence>
       </div>
     </section>
   );

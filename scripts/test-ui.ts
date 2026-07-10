@@ -103,6 +103,7 @@ async function testStudioPage() {
     "studio graph play control",
     html.includes("interactiveGraphPlaybackOverlay"),
   );
+  record("studio graph story overlay", html.includes("interactiveGraphStory"));
   record("studio findings tab", html.includes("Findings"));
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));
