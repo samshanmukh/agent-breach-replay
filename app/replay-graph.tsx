@@ -263,10 +263,11 @@ export default function ReplayGraph({
           <button
             className={`interactiveGraphPlay${playing ? " playing" : ""}`}
             onClick={onTogglePlay}
+            aria-label={playing ? "Pause replay" : "Play replay"}
+            title={playing ? "Pause replay" : "Play replay"}
             type="button"
           >
-            <span>{playing ? "Ⅱ" : "▶"}</span>
-            {playing ? "Pause" : "Play"}
+            {playing ? "Ⅱ" : "▶"}
           </button>
           <code className="interactiveGraphStep">
             {currentStep + 1}/{events.length}

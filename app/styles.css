@@ -1317,13 +1317,15 @@ pre,
 }
 
 .interactiveGraphToolbar button.interactiveGraphPlay {
-  display: inline-flex;
-  min-width: 66px;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  width: 27px;
+  min-width: 27px;
+  padding: 0;
+  place-items: center;
   border-color: #fff;
   background: #fff;
   color: #111318;
+  font-size: 8px;
   font-weight: 750;
 }
 
@@ -1336,10 +1338,6 @@ pre,
   border-color: rgba(156, 131, 239, 0.55);
   background: rgba(156, 131, 239, 0.16);
   color: #c7b9f7;
-}
-
-.interactiveGraphPlay > span {
-  font-size: 7px;
 }
 
 .interactiveGraphToolbar code {
