@@ -99,7 +99,10 @@ async function testStudioPage() {
   record("studio replay view", html.includes("Execution path"));
   record("studio interactive graph", html.includes("interactiveGraph"));
   record("studio graph reset control", html.includes("Reset layout"));
-  record("studio graph play control", html.includes("interactiveGraphPlay"));
+  record(
+    "studio graph play control",
+    html.includes("interactiveGraphPlaybackOverlay"),
+  );
   record("studio findings tab", html.includes("Findings"));
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));

@@ -1316,40 +1316,11 @@ pre,
   color: var(--obs-text);
 }
 
-.interactiveGraphToolbar button.interactiveGraphPlay {
-  display: grid;
-  width: 27px;
-  min-width: 27px;
-  padding: 0;
-  place-items: center;
-  border-color: #fff;
-  background: #fff;
-  color: #111318;
-  font-size: 8px;
-  font-weight: 750;
-}
-
-.interactiveGraphToolbar button.interactiveGraphPlay:hover {
-  background: #e9ebef;
-  color: #111318;
-}
-
-.interactiveGraphToolbar button.interactiveGraphPlay.playing {
-  border-color: rgba(156, 131, 239, 0.55);
-  background: rgba(156, 131, 239, 0.16);
-  color: #c7b9f7;
-}
-
 .interactiveGraphToolbar code {
   min-width: 38px;
   color: var(--obs-faint);
   font-size: 7px;
   text-align: center;
-}
-
-.interactiveGraphToolbar code.interactiveGraphStep {
-  min-width: 28px;
-  color: var(--obs-muted);
 }
 
 .interactiveGraphViewport {
@@ -1362,6 +1333,52 @@ pre,
     radial-gradient(circle, rgba(255, 255, 255, 0.095) 1px, transparent 1px),
     #0c0f14;
   background-size: 22px 22px;
+}
+
+.interactiveGraphPlaybackOverlay {
+  position: absolute;
+  z-index: 8;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid var(--obs-line);
+  border-radius: 8px;
+  background: rgba(12, 15, 20, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.interactiveGraphPlaybackOverlay button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid #fff;
+  border-radius: 6px;
+  background: #fff;
+  color: #111318;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.interactiveGraphPlaybackOverlay button:hover {
+  background: #e9ebef;
+}
+
+.interactiveGraphPlaybackOverlay button.playing {
+  border-color: rgba(156, 131, 239, 0.55);
+  background: rgba(156, 131, 239, 0.2);
+  color: #c7b9f7;
+}
+
+.interactiveGraphPlaybackOverlay code {
+  min-width: 27px;
+  color: var(--obs-muted);
+  font-size: 7px;
+  text-align: center;
 }
 
 .interactiveGraphViewport.panning {

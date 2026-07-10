@@ -260,18 +260,6 @@ export default function ReplayGraph({
           <span>Drag nodes to reorganize · drag canvas to pan · scroll to zoom</span>
         </div>
         <div>
-          <button
-            className={`interactiveGraphPlay${playing ? " playing" : ""}`}
-            onClick={onTogglePlay}
-            aria-label={playing ? "Pause replay" : "Play replay"}
-            title={playing ? "Pause replay" : "Play replay"}
-            type="button"
-          >
-            {playing ? "Ⅱ" : "▶"}
-          </button>
-          <code className="interactiveGraphStep">
-            {currentStep + 1}/{events.length}
-          </code>
           <button onClick={() => zoom(transform.scale - 0.15)} type="button" aria-label="Zoom out">−</button>
           <code>{Math.round(transform.scale * 100)}%</code>
           <button onClick={() => zoom(transform.scale + 0.15)} type="button" aria-label="Zoom in">+</button>
@@ -289,6 +277,21 @@ export default function ReplayGraph({
         onWheel={onWheel}
         ref={viewportRef}
       >
+        <div
+          className="interactiveGraphPlaybackOverlay"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            className={playing ? "playing" : ""}
+            onClick={onTogglePlay}
+            aria-label={playing ? "Pause replay" : "Play replay"}
+            title={playing ? "Pause replay" : "Play replay"}
+            type="button"
+          >
+            {playing ? "Ⅱ" : "▶"}
+          </button>
+          <code>{currentStep + 1}/{events.length}</code>
+        </div>
         <div
           className="interactiveGraphCanvas"
           style={{
