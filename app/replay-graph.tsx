@@ -172,7 +172,7 @@ export default function ReplayGraph({
   }
 
   function startCanvasDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) return;
+    if ((event.target as HTMLElement).closest(".interactiveGraphNode")) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragging({
       type: "canvas",
