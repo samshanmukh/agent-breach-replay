@@ -98,6 +98,9 @@ export default function ReplayGraph({
   playing,
   onTogglePlay,
   currentStep,
+  incidentIds,
+  playbackRate,
+  onCyclePlaybackRate,
 }: {
   events: ReplayGraphEvent[];
   selectedId: string;
@@ -106,6 +109,9 @@ export default function ReplayGraph({
   playing: boolean;
   onTogglePlay: () => void;
   currentStep: number;
+  incidentIds: Set<string>;
+  playbackRate: number;
+  onCyclePlaybackRate: () => void;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
@@ -312,7 +318,16 @@ export default function ReplayGraph({
           >
             {playing ? "Ⅱ" : "▶"}
           </button>
-          <code>{currentStep + 1}/{events.length}</code>
+          <code>SPAN {currentStep + 1}/{events.length}</code>
+          <button
+            className="interactiveGraphRate"
+            onClick={onCyclePlaybackRate}
+            aria-label={`Replay speed ${playbackRate}x`}
+            title="Change replay speed"
+            type="button"
+          >
+            {playbackRate}×
+          </button>
         </div>
         <motion.div
           className="interactiveGraphCanvas"
@@ -349,10 +364,12 @@ export default function ReplayGraph({
               if (!fromPoint || !toPoint) return null;
               const visited = visitedIds.has(from.id) && visitedIds.has(to.id);
               const selected = selectedId === from.id || selectedId === to.id;
+              const incident =
+                incidentIds.has(from.id) && incidentIds.has(to.id);
               return (
                 <g key={`${from.id}-${to.id}`}>
                   <motion.path
-                    className={`${visited ? "visited" : ""}${selected ? " selected" : ""}`}
+                    className={`${visited ? "visited" : ""}${selected ? " selected" : ""}${incident ? " incident" : ""}`}
                     d={edgePath(fromPoint, toPoint)}
                     markerEnd="url(#interactive-arrow)"
                     initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
@@ -380,6 +397,7 @@ export default function ReplayGraph({
             const point = positions[event.id] ?? { x: 0, y: 0 };
             const visited = visitedIds.has(event.id);
             const selected = selectedId === event.id;
+            const incident = incidentIds.has(event.id);
             return (
               <motion.button
                 className={[
@@ -387,6 +405,7 @@ export default function ReplayGraph({
                   `trust-${event.trust}`,
                   visited ? "visited" : "",
                   selected ? "selected" : "",
+                  incident ? "incident" : "",
                 ].filter(Boolean).join(" ")}
                 initial={
                   reduceMotion
@@ -394,7 +413,7 @@ export default function ReplayGraph({
                     : { opacity: 0, scale: 0.9, y: 10 }
                 }
                 animate={{
-                  opacity: visited ? 1 : 0.54,
+                  opacity: visited ? 1 : incident ? 0.72 : 0.42,
                   scale: selected ? 1.045 : 1,
                   y: selected ? -5 : 0,
                   boxShadow:
@@ -453,13 +472,24 @@ export default function ReplayGraph({
               }
             >
               <header>
-                <span>Step {currentStep + 1} of {events.length}</span>
+                <span>Active span</span>
                 <code>{events[currentStep].kind}</code>
               </header>
               <strong>{events[currentStep].title}</strong>
+              <div className="interactiveGraphSpanMeta">
+                <code>{events[currentStep].id}</code>
+                <span>
+                  parent: {events[currentStep].parentId ?? "trace root"}
+                </span>
+              </div>
               <p>{events[currentStep].summary}</p>
               <footer>
-                <span>{events[currentStep].trust}</span>
+                <span>
+                  {events[currentStep].trust}
+                  {incidentIds.has(events[currentStep].id)
+                    ? " · evidence"
+                    : ""}
+                </span>
                 <b>{events[currentStep].decision.replaceAll("_", " ")}</b>
               </footer>
             </motion.aside>

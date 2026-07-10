@@ -96,7 +96,7 @@ async function testStudioPage() {
   record("studio status 200", response.status === 200, `got ${response.status}`);
   record("studio shell present", html.includes("studioShell"));
   record("studio incident list", html.includes("Vendor email exfiltration"));
-  record("studio replay view", html.includes("Execution path"));
+  record("studio replay view", html.includes("Causal span replay"));
   record("studio interactive graph", html.includes("interactiveGraph"));
   record("studio graph reset control", html.includes("Reset layout"));
   record(
@@ -104,6 +104,7 @@ async function testStudioPage() {
     html.includes("interactiveGraphPlaybackOverlay"),
   );
   record("studio graph story overlay", html.includes("interactiveGraphStory"));
+  record("studio active span debugger", html.includes("Active span"));
   record("studio findings tab", html.includes("Findings"));
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));

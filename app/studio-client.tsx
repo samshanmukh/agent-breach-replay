@@ -584,6 +584,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
   const [selectedEventId, setSelectedEventId] = useState(initialRuns[0].events[0].id);
   const [stepIndex, setStepIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<SpanKind | "ALL">("ALL");
   const [importOpen, setImportOpen] = useState(false);
@@ -629,6 +630,9 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
   );
   const visibleSpans = run.events.filter(
     (item) => kindFilter === "ALL" || item.kind === kindFilter,
+  );
+  const incidentIds = new Set(
+    run.findings.flatMap((finding) => finding.evidence),
   );
 
   async function refreshWorkflows() {
@@ -698,15 +702,20 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
 
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setInterval(() => {
+    const activeDuration = run.events[stepIndex]?.durationMs ?? 1000;
+    const delay = Math.max(
+      650,
+      Math.min(2400, activeDuration * 1.25),
+    ) / playbackRate;
+    const timer = window.setTimeout(() => {
       setStepIndex((current) => {
         const next = (current + 1) % run.events.length;
         setSelectedEventId(run.events[next].id);
         return next;
       });
-    }, 1400);
-    return () => window.clearInterval(timer);
-  }, [playing, run.events]);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [playing, playbackRate, run.events, stepIndex]);
 
   function selectRun(nextRun: StudioRun) {
     setRunId(nextRun.id);
@@ -1004,7 +1013,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
           {tab === "replay" ? (
             <div className="obsReplay">
               <div className="obsSectionHeader">
-                <div><span className="obsEyebrow">Influence graph</span><h2>Execution path</h2></div>
+                <div><span className="obsEyebrow">Trace debugger</span><h2>Causal span replay</h2></div>
                 <div className="obsLegend">
                   {(["trusted", "untrusted", "protected", "external"] as Trust[]).map((tone) => (
                     <span key={tone}><i className={tone} />{tone}</span>
@@ -1014,11 +1023,18 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
               <ReplayGraph
                 currentStep={stepIndex}
                 events={run.events}
+                incidentIds={incidentIds}
+                onCyclePlaybackRate={() =>
+                  setPlaybackRate((rate) =>
+                    rate === 0.5 ? 1 : rate === 1 ? 2 : 0.5,
+                  )
+                }
                 onSelect={(item) => {
                   const selected = run.events.find((eventItem) => eventItem.id === item.id);
                   if (selected) selectEvent(selected);
                 }}
                 onTogglePlay={() => setPlaying((value) => !value)}
+                playbackRate={playbackRate}
                 playing={playing}
                 selectedId={selectedEvent.id}
                 visitedIds={new Set(run.events.slice(0, stepIndex + 1).map((item) => item.id))}
@@ -1031,7 +1047,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                     setSelectedEventId(run.events[next].id);
                   }} type="button">‹</button>
                   <button className="play" onClick={() => setPlaying((value) => !value)} type="button">
-                    {playing ? "Pause" : "Play replay"}
+                    {playing ? "Pause trace" : "Replay trace"}
                   </button>
                   <button onClick={() => {
                     const next = Math.min(run.events.length - 1, stepIndex + 1);
@@ -1048,7 +1064,9 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                       onClick={() => selectEvent(item)}
                       type="button"
                     >
-                      <span>{String(index + 1).padStart(2, "0")}</span>{item.title}
+                      <span>{item.kind} · {String(index + 1).padStart(2, "0")}</span>
+                      <strong>{item.title}</strong>
+                      <small>{item.id} · {item.durationMs} ms</small>
                     </button>
                   ))}
                 </div>
