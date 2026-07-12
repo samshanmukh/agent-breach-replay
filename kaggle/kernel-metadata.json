@@ -6,7 +6,9 @@
   "kernel_type": "notebook",
   "is_private": "true",
   "enable_gpu": "true",
+  "enable_tpu": "false",
   "enable_internet": "false",
+  "machine_shape": "NvidiaTeslaT4",
   "competition_sources": [
     "ai-agent-security-multi-step-tool-attacks"
   ],
