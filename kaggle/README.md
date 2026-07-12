@@ -67,6 +67,34 @@ validates end-to-end through the evaluator's own `eval_attack` path
 (opaque-env generation → fresh-env replay → predicate scoring), producing
 diverse EXFILTRATION / CONFUSED_DEPUTY / DESTRUCTIVE_WRITE findings.
 
+## Submitting
+
+This notebook has already been pushed to Kaggle as
+`samshanmukh/agent-breach-multi-step-tool-attacks`. One manual step remains that
+the Kaggle API/MCP cannot perform: **attaching the competition as a Notebook
+input**. Kaggle blocks submission until the notebook lists the competition as a
+data source (`"Your Notebook must include this competition as a data source"`).
+
+Two ways to finish:
+
+**A. Kaggle web UI (quickest)**
+1. Open the notebook: <https://www.kaggle.com/code/samshanmukh/agent-breach-multi-step-tool-attacks>.
+2. **Add Input → Competitions →** *AI Agent Security - Multi-Step Tool Attacks*.
+3. Confirm accelerator is **GPU T4** (not P100) and **Internet is off**.
+4. **Save & Run All** — the run must go green (it will now find `aicomp_sdk`).
+5. Click **Submit to Competition** on the successful version.
+
+**B. Kaggle CLI (from this folder)** — `kernel-metadata.json` already declares
+the competition source, so the CLI attaches it automatically:
+```bash
+pip install kaggle            # put kaggle.json in ~/.kaggle/ (chmod 600)
+kaggle kernels push -p kaggle/    # pushes + attaches competition + runs
+# after the version finishes successfully:
+kaggle competitions submit \
+  -c ai-agent-security-multi-step-tool-attacks \
+  -k samshanmukh/agent-breach-multi-step-tool-attacks -v <VERSION>
+```
+
 ## Regenerating the notebook
 
 `notebook.ipynb` embeds `attack.py`. If you edit `attack.py`, regenerate the
