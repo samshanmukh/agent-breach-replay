@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-  type WheelEvent,
-} from "react";
+import { useMemo } from "react";
 import {
   AnimatePresence,
   motion,
@@ -30,64 +23,24 @@ export type ReplayGraphEvent = {
   decision: GraphDecision;
 };
 
-type Point = { x: number; y: number };
-type Transform = { x: number; y: number; scale: number };
+const ZONE_FOR_TRUST: Record<GraphTrust, string> = {
+  trusted: "Command",
+  untrusted: "Untrusted",
+  protected: "Vault",
+  external: "Exfil",
+  neutral: "Ops",
+};
 
-const canvas = { width: 1160, height: 460 };
-const node = { width: 154, height: 86 };
+const ACTOR_GLYPH: Record<string, string> = {
+  user: "USR",
+  agent: "AGT",
+  tool: "TL",
+  policy: "POL",
+  detector: "DET",
+};
 
-function initialLayout(events: ReplayGraphEvent[]) {
-  const byId = new Map(events.map((event) => [event.id, event]));
-  const depths = new Map<string, number>();
-
-  function depthFor(event: ReplayGraphEvent, seen = new Set<string>()): number {
-    const cached = depths.get(event.id);
-    if (cached !== undefined) return cached;
-    if (!event.parentId || seen.has(event.parentId)) {
-      depths.set(event.id, 0);
-      return 0;
-    }
-    const parent = byId.get(event.parentId);
-    if (!parent) {
-      depths.set(event.id, 0);
-      return 0;
-    }
-    seen.add(event.id);
-    const depth = depthFor(parent, seen) + 1;
-    depths.set(event.id, depth);
-    return depth;
-  }
-
-  events.forEach((event) => depthFor(event));
-  const byDepth = new Map<number, ReplayGraphEvent[]>();
-  events.forEach((event) => {
-    const depth = depths.get(event.id) ?? 0;
-    byDepth.set(depth, [...(byDepth.get(depth) ?? []), event]);
-  });
-
-  const maxDepth = Math.max(1, ...depths.values());
-  const horizontalGap = Math.min(190, (canvas.width - node.width - 80) / maxDepth);
-  const positions: Record<string, Point> = {};
-
-  for (const [depth, levelEvents] of byDepth) {
-    const verticalGap = canvas.height / (levelEvents.length + 1);
-    levelEvents.forEach((event, index) => {
-      positions[event.id] = {
-        x: 38 + depth * horizontalGap,
-        y: verticalGap * (index + 1) - node.height / 2,
-      };
-    });
-  }
-  return positions;
-}
-
-function edgePath(from: Point, to: Point) {
-  const startX = from.x + node.width;
-  const startY = from.y + node.height / 2;
-  const endX = to.x;
-  const endY = to.y + node.height / 2;
-  const curve = Math.max(48, Math.abs(endX - startX) * 0.42);
-  return `M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`;
+function decisionLabel(decision: GraphDecision) {
+  return decision.replaceAll("_", " ");
 }
 
 export default function ReplayGraph({
@@ -101,6 +54,8 @@ export default function ReplayGraph({
   incidentIds,
   playbackRate,
   onCyclePlaybackRate,
+  missionTitle,
+  severity,
 }: {
   events: ReplayGraphEvent[];
   selectedId: string;
@@ -112,389 +67,257 @@ export default function ReplayGraph({
   incidentIds: Set<string>;
   playbackRate: number;
   onCyclePlaybackRate: () => void;
+  missionTitle?: string;
+  severity?: string;
 }) {
-  const viewportRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const [positions, setPositions] = useState(() => initialLayout(events));
-  const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
-  const [dragging, setDragging] = useState<{
-    type: "node" | "canvas";
-    id?: string;
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    moved: boolean;
-  } | null>(null);
-
-  const eventKey = events.map((event) => event.id).join("|");
-  const edges = useMemo(
-    () =>
-      events.flatMap((event) => {
-        if (!event.parentId) return [];
-        const parent = events.find((candidate) => candidate.id === event.parentId);
-        return parent ? [{ from: parent, to: event }] : [];
-      }),
-    [events],
+  const active = events[currentStep] ?? events[0];
+  const progress = events.length
+    ? ((currentStep + 1) / events.length) * 100
+    : 0;
+  const evidenceHits = useMemo(
+    () => events.filter((event) => incidentIds.has(event.id)).length,
+    [events, incidentIds],
   );
+  const blockedHits = useMemo(
+    () =>
+      events.filter(
+        (event) =>
+          visitedIds.has(event.id) &&
+          (event.decision === "blocked" ||
+            event.decision === "approval_required"),
+      ).length,
+    [events, visitedIds],
+  );
+  const score = evidenceHits * 100 + blockedHits * 40 + visitedIds.size * 5;
+  const isAlert =
+    !!active &&
+    (incidentIds.has(active.id) ||
+      active.decision === "blocked" ||
+      active.decision === "approval_required");
 
-  function fitGraph() {
-    const width = viewportRef.current?.clientWidth ?? canvas.width;
-    const height = viewportRef.current?.clientHeight ?? canvas.height;
-    const scale = Math.min(1, (width - 36) / canvas.width, (height - 36) / canvas.height);
-    setTransform({
-      x: (width - canvas.width * scale) / 2,
-      y: (height - canvas.height * scale) / 2,
-      scale,
-    });
-  }
-
-  useEffect(() => {
-    setPositions(initialLayout(events));
-    const frame = requestAnimationFrame(fitGraph);
-    return () => cancelAnimationFrame(frame);
-  }, [eventKey]);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const observer = new ResizeObserver(() => fitGraph());
-    observer.observe(viewport);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!playing) return;
-    const point = positions[selectedId];
-    const viewport = viewportRef.current;
-    if (!point || !viewport) return;
-    setTransform((current) => ({
-      ...current,
-      x:
-        viewport.clientWidth / 2 -
-        (point.x + node.width / 2) * current.scale,
-      y:
-        viewport.clientHeight / 2 -
-        (point.y + node.height / 2) * current.scale,
+  const trail = useMemo(() => {
+    const windowStart = Math.max(0, currentStep - 2);
+    const windowEnd = Math.min(events.length, currentStep + 4);
+    return events.slice(windowStart, windowEnd).map((event, offset) => ({
+      event,
+      absoluteIndex: windowStart + offset,
     }));
-  }, [playing, selectedId]);
+  }, [events, currentStep]);
 
-  function zoom(nextScale: number, center?: Point) {
-    setTransform((current) => {
-      const scale = Math.min(1.8, Math.max(0.35, nextScale));
-      const anchor = center ?? {
-        x: (viewportRef.current?.clientWidth ?? canvas.width) / 2,
-        y: (viewportRef.current?.clientHeight ?? canvas.height) / 2,
-      };
-      const graphX = (anchor.x - current.x) / current.scale;
-      const graphY = (anchor.y - current.y) / current.scale;
-      return {
-        scale,
-        x: anchor.x - graphX * scale,
-        y: anchor.y - graphY * scale,
-      };
-    });
-  }
-
-  function onWheel(event: WheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const bounds = viewportRef.current?.getBoundingClientRect();
-    zoom(transform.scale * (event.deltaY > 0 ? 0.9 : 1.1), {
-      x: event.clientX - (bounds?.left ?? 0),
-      y: event.clientY - (bounds?.top ?? 0),
-    });
-  }
-
-  function startCanvasDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if ((event.target as HTMLElement).closest(".interactiveGraphNode")) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging({
-      type: "canvas",
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: transform.x,
-      originY: transform.y,
-      moved: false,
-    });
-  }
-
-  function startNodeDrag(
-    event: ReactPointerEvent<HTMLButtonElement>,
-    eventId: string,
-  ) {
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const point = positions[eventId] ?? { x: 0, y: 0 };
-    setDragging({
-      type: "node",
-      id: eventId,
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: point.x,
-      originY: point.y,
-      moved: false,
-    });
-  }
-
-  function movePointer(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!dragging) return;
-    const deltaX = event.clientX - dragging.startX;
-    const deltaY = event.clientY - dragging.startY;
-    const moved = dragging.moved || Math.abs(deltaX) + Math.abs(deltaY) > 4;
-    if (dragging.type === "canvas") {
-      setTransform((current) => ({
-        ...current,
-        x: dragging.originX + deltaX,
-        y: dragging.originY + deltaY,
-      }));
-    } else if (dragging.id) {
-      setPositions((current) => ({
-        ...current,
-        [dragging.id!]: {
-          x: Math.max(0, Math.min(canvas.width - node.width, dragging.originX + deltaX / transform.scale)),
-          y: Math.max(0, Math.min(canvas.height - node.height, dragging.originY + deltaY / transform.scale)),
-        },
-      }));
-    }
-    if (moved !== dragging.moved) {
-      setDragging((current) => (current ? { ...current, moved } : current));
-    }
-  }
-
-  function endPointer() {
-    if (dragging?.type === "node" && dragging.id && !dragging.moved) {
-      const selected = events.find((event) => event.id === dragging.id);
-      if (selected) onSelect(selected);
-    }
-    setDragging(null);
-  }
-
-  function resetLayout() {
-    setPositions(initialLayout(events));
-    requestAnimationFrame(fitGraph);
-  }
-
-  async function toggleFullscreen() {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await viewport.requestFullscreen();
+  if (!active) {
+    return (
+      <section className="incidentArena">
+        <div className="incidentArenaEmpty">No incident spans to play.</div>
+      </section>
+    );
   }
 
   return (
-    <section className="interactiveGraph">
-      <header className="interactiveGraphToolbar">
-        <div>
-          <span>Drag nodes to reorganize · drag canvas to pan · scroll to zoom</span>
+    <section className={`incidentArena${playing ? " isPlaying" : ""}${isAlert ? " isAlert" : ""}`}>
+      <div className="incidentArenaAtmosphere" aria-hidden="true">
+        <span className="incidentArenaGrid" />
+        <span className="incidentArenaScan" />
+        <span className="incidentArenaGlow" />
+      </div>
+
+      <header className="incidentArenaHud">
+        <div className="incidentArenaMission">
+          <span className="incidentArenaEyebrow">Incident playthrough</span>
+          <strong>{missionTitle ?? "Live breach replay"}</strong>
+          <small>
+            {severity ? `${severity.toUpperCase()} threat` : "TRACE MISSION"} ·{" "}
+            {evidenceHits} evidence nodes
+          </small>
         </div>
-        <div>
-          <button onClick={() => zoom(transform.scale - 0.15)} type="button" aria-label="Zoom out">−</button>
-          <code>{Math.round(transform.scale * 100)}%</code>
-          <button onClick={() => zoom(transform.scale + 0.15)} type="button" aria-label="Zoom in">+</button>
-          <button onClick={fitGraph} type="button">Fit</button>
-          <button onClick={resetLayout} type="button">Reset layout</button>
-          <button onClick={() => void toggleFullscreen()} type="button" aria-label="Toggle fullscreen">↗</button>
+        <div className="incidentArenaMeters">
+          <div>
+            <span>SCORE</span>
+            <b>{score}</b>
+          </div>
+          <div>
+            <span>BEAT</span>
+            <b>
+              {String(currentStep + 1).padStart(2, "0")}/
+              {String(events.length).padStart(2, "0")}
+            </b>
+          </div>
+          <div>
+            <span>ZONE</span>
+            <b>{ZONE_FOR_TRUST[active.trust]}</b>
+          </div>
         </div>
-      </header>
-      <div
-        className={`interactiveGraphViewport${dragging?.type === "canvas" ? " panning" : ""}`}
-        onPointerDown={startCanvasDrag}
-        onPointerMove={movePointer}
-        onPointerUp={endPointer}
-        onPointerCancel={endPointer}
-        onWheel={onWheel}
-        ref={viewportRef}
-      >
-        <div
-          className="interactiveGraphPlaybackOverlay"
-          onPointerDown={(event) => event.stopPropagation()}
-        >
+        <div className="incidentArenaControls">
           <button
             className={playing ? "playing" : ""}
             onClick={onTogglePlay}
-            aria-label={playing ? "Pause replay" : "Play replay"}
-            title={playing ? "Pause replay" : "Play replay"}
+            aria-label={playing ? "Pause incident" : "Play incident"}
             type="button"
           >
-            {playing ? "Ⅱ" : "▶"}
+            {playing ? "PAUSE" : "PLAY"}
           </button>
-          <code>SPAN {currentStep + 1}/{events.length}</code>
           <button
-            className="interactiveGraphRate"
             onClick={onCyclePlaybackRate}
-            aria-label={`Replay speed ${playbackRate}x`}
-            title="Change replay speed"
+            aria-label={`Playback speed ${playbackRate}x`}
             type="button"
           >
             {playbackRate}×
           </button>
         </div>
-        <motion.div
-          className="interactiveGraphCanvas"
-          style={{
-            width: canvas.width,
-            height: canvas.height,
-          }}
-          animate={{
-            x: transform.x,
-            y: transform.y,
-            scale: transform.scale,
-          }}
+      </header>
+
+      <div className="incidentArenaProgress" aria-hidden="true">
+        <motion.i
+          animate={{ width: `${progress}%` }}
           transition={
-            reduceMotion || dragging
+            reduceMotion
               ? { duration: 0 }
-              : { type: "spring", stiffness: 260, damping: 32, mass: 0.7 }
+              : { type: "spring", stiffness: 120, damping: 24 }
           }
-        >
-          <svg
-            aria-hidden="true"
-            className="interactiveGraphEdges"
-            height={canvas.height}
-            viewBox={`0 0 ${canvas.width} ${canvas.height}`}
-            width={canvas.width}
-          >
-            <defs>
-              <marker id="interactive-arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
-                <path d="M0,0 L8,4 L0,8 Z" fill="currentColor" />
-              </marker>
-            </defs>
-            {edges.map(({ from, to }) => {
-              const fromPoint = positions[from.id];
-              const toPoint = positions[to.id];
-              if (!fromPoint || !toPoint) return null;
-              const visited = visitedIds.has(from.id) && visitedIds.has(to.id);
-              const selected = selectedId === from.id || selectedId === to.id;
-              const incident =
-                incidentIds.has(from.id) && incidentIds.has(to.id);
-              return (
-                <g key={`${from.id}-${to.id}`}>
-                  <motion.path
-                    className={`${visited ? "visited" : ""}${selected ? " selected" : ""}${incident ? " incident" : ""}`}
-                    d={edgePath(fromPoint, toPoint)}
-                    markerEnd="url(#interactive-arrow)"
-                    initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-                    animate={{
-                      pathLength: visited ? 1 : 0.22,
-                      opacity: visited ? 1 : 0.34,
-                    }}
-                    transition={
-                      reduceMotion
-                        ? { duration: 0 }
-                        : {
-                            pathLength: {
-                              duration: selected ? 0.62 : 0.38,
-                              ease: "easeInOut",
-                            },
-                            opacity: { duration: 0.2 },
-                          }
-                    }
-                  />
-                </g>
-              );
-            })}
-          </svg>
-          {events.map((event, index) => {
-            const point = positions[event.id] ?? { x: 0, y: 0 };
+        />
+      </div>
+
+      <div className="incidentArenaStage">
+        <aside className="incidentArenaZones" aria-label="Trust zones">
+          {(
+            [
+              ["trusted", "Command"],
+              ["untrusted", "Untrusted"],
+              ["protected", "Vault"],
+              ["external", "Exfil"],
+            ] as const
+          ).map(([tone, label]) => (
+            <div
+              className={`incidentArenaZone trust-${tone}${
+                active.trust === tone ? " active" : ""
+              }`}
+              key={tone}
+            >
+              <i />
+              <span>{label}</span>
+            </div>
+          ))}
+        </aside>
+
+        <div className="incidentArenaFocus">
+          <AnimatePresence mode="wait">
+            <motion.article
+              className={`incidentArenaHero trust-${active.trust}${
+                isAlert ? " alert" : ""
+              }`}
+              key={active.id}
+              initial={
+                reduceMotion
+                  ? false
+                  : { opacity: 0, y: 28, scale: 0.96, filter: "blur(6px)" }
+              }
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                filter: "blur(0px)",
+              }}
+              exit={
+                reduceMotion
+                  ? undefined
+                  : { opacity: 0, y: -18, scale: 0.98, filter: "blur(4px)" }
+              }
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 280, damping: 26 }
+              }
+            >
+              <div className="incidentArenaHeroTop">
+                <span className="incidentArenaGlyph">
+                  {ACTOR_GLYPH[active.actor] ?? active.kind.slice(0, 3)}
+                </span>
+                <div>
+                  <code>{active.kind}</code>
+                  <small>{ZONE_FOR_TRUST[active.trust]} lane</small>
+                </div>
+                {isAlert ? <b className="incidentArenaAlertTag">ALERT</b> : null}
+              </div>
+
+              <h3>{active.title}</h3>
+              <p>{active.summary}</p>
+
+              <footer>
+                <span>{active.tool ?? active.target ?? active.actor}</span>
+                <strong>{decisionLabel(active.decision)}</strong>
+              </footer>
+
+              {playing && !reduceMotion ? (
+                <motion.span
+                  className="incidentArenaPulse"
+                  aria-hidden="true"
+                  animate={{ opacity: [0.15, 0.45, 0.15], scale: [1, 1.04, 1] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                />
+              ) : null}
+            </motion.article>
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isAlert ? (
+              <motion.div
+                className="incidentArenaBanner"
+                key={`alert-${active.id}`}
+                initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, x: 12 }}
+                transition={{ duration: 0.28 }}
+              >
+                <span>Security event</span>
+                <strong>
+                  {incidentIds.has(active.id)
+                    ? "Evidence path engaged"
+                    : decisionLabel(active.decision)}
+                </strong>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        <nav className="incidentArenaTrail" aria-label="Incident beats">
+          {trail.map(({ event, absoluteIndex }) => {
             const visited = visitedIds.has(event.id);
             const selected = selectedId === event.id;
             const incident = incidentIds.has(event.id);
             return (
               <motion.button
                 className={[
-                  "interactiveGraphNode",
+                  "incidentArenaBeat",
                   `trust-${event.trust}`,
                   visited ? "visited" : "",
                   selected ? "selected" : "",
                   incident ? "incident" : "",
-                ].filter(Boolean).join(" ")}
-                initial={
-                  reduceMotion
-                    ? false
-                    : { opacity: 0, scale: 0.9, y: 10 }
-                }
-                animate={{
-                  opacity: visited ? 1 : incident ? 0.72 : 0.42,
-                  scale: selected ? 1.045 : 1,
-                  y: selected ? -5 : 0,
-                  boxShadow:
-                    selected && playing && !reduceMotion
-                      ? [
-                          "0 0 0 3px rgba(255,255,255,0.06), 0 12px 30px rgba(0,0,0,0.35)",
-                          "0 0 0 7px rgba(156,131,239,0.15), 0 16px 38px rgba(0,0,0,0.42)",
-                          "0 0 0 3px rgba(255,255,255,0.06), 0 12px 30px rgba(0,0,0,0.35)",
-                        ]
-                      : "0 8px 24px rgba(0,0,0,0.24)",
-                }}
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                key={event.id}
+                onClick={() => onSelect(event)}
+                type="button"
+                initial={reduceMotion ? false : { opacity: 0, x: 12 }}
+                animate={{ opacity: selected ? 1 : visited ? 0.92 : 0.45, x: 0 }}
                 transition={
                   reduceMotion
                     ? { duration: 0 }
-                    : {
-                        opacity: { duration: 0.24, delay: index * 0.035 },
-                        scale: { type: "spring", stiffness: 360, damping: 24 },
-                        y: { type: "spring", stiffness: 360, damping: 24 },
-                        boxShadow:
-                          selected && playing
-                            ? { duration: 1.45, repeat: Infinity }
-                            : { duration: 0.2 },
-                      }
+                    : { delay: absoluteIndex * 0.02, duration: 0.25 }
                 }
-                key={event.id}
-                onPointerDown={(pointerEvent) =>
-                  startNodeDrag(pointerEvent, event.id)
-                }
-                style={{ left: point.x, top: point.y }}
-                type="button"
               >
-                <span>
-                  <code>{event.kind}</code>
-                  <i>{event.trust.slice(0, 2).toUpperCase()}</i>
-                </span>
-                <strong>{event.title}</strong>
-                <small>{event.tool ?? event.target ?? event.actor}</small>
-                {event.decision === "blocked" ? <b>BLOCKED</b> : null}
-                {event.decision === "approval_required" ? <b className="approval">APPROVAL</b> : null}
+                <span>{String(absoluteIndex + 1).padStart(2, "0")}</span>
+                <div>
+                  <strong>{event.title}</strong>
+                  <small>
+                    {event.kind}
+                    {incident ? " · evidence" : ""}
+                  </small>
+                </div>
               </motion.button>
             );
           })}
-        </motion.div>
-        <AnimatePresence mode="wait">
-          {events[currentStep] ? (
-            <motion.aside
-              className={`interactiveGraphStory trust-${events[currentStep].trust}`}
-              key={events[currentStep].id}
-              initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={reduceMotion ? undefined : { opacity: 0, y: -8, scale: 0.98 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 300, damping: 28 }
-              }
-            >
-              <header>
-                <span>Active span</span>
-                <code>{events[currentStep].kind}</code>
-              </header>
-              <strong>{events[currentStep].title}</strong>
-              <div className="interactiveGraphSpanMeta">
-                <code>{events[currentStep].id}</code>
-                <span>
-                  parent: {events[currentStep].parentId ?? "trace root"}
-                </span>
-              </div>
-              <p>{events[currentStep].summary}</p>
-              <footer>
-                <span>
-                  {events[currentStep].trust}
-                  {incidentIds.has(events[currentStep].id)
-                    ? " · evidence"
-                    : ""}
-                </span>
-                <b>{events[currentStep].decision.replaceAll("_", " ")}</b>
-              </footer>
-            </motion.aside>
-          ) : null}
-        </AnimatePresence>
+        </nav>
       </div>
     </section>
   );

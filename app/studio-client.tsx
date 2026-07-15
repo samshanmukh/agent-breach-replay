@@ -1013,7 +1013,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
           {tab === "replay" ? (
             <div className="obsReplay">
               <div className="obsSectionHeader">
-                <div><span className="obsEyebrow">Trace debugger</span><h2>Causal span replay</h2></div>
+                <div><span className="obsEyebrow">Incident arena</span><h2>Play the breach</h2></div>
                 <div className="obsLegend">
                   {(["trusted", "untrusted", "protected", "external"] as Trust[]).map((tone) => (
                     <span key={tone}><i className={tone} />{tone}</span>
@@ -1024,6 +1024,8 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                 currentStep={stepIndex}
                 events={run.events}
                 incidentIds={incidentIds}
+                missionTitle={run.name}
+                severity={run.severity}
                 onCyclePlaybackRate={() =>
                   setPlaybackRate((rate) =>
                     rate === 0.5 ? 1 : rate === 1 ? 2 : 0.5,
@@ -1047,7 +1049,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                     setSelectedEventId(run.events[next].id);
                   }} type="button">‹</button>
                   <button className="play" onClick={() => setPlaying((value) => !value)} type="button">
-                    {playing ? "Pause trace" : "Replay trace"}
+                    {playing ? "Pause mission" : "Play incident"}
                   </button>
                   <button onClick={() => {
                     const next = Math.min(run.events.length - 1, stepIndex + 1);
@@ -1064,9 +1066,9 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                       onClick={() => selectEvent(item)}
                       type="button"
                     >
-                      <span>{item.kind} · {String(index + 1).padStart(2, "0")}</span>
+                      <span>BEAT {String(index + 1).padStart(2, "0")} · {item.kind}</span>
                       <strong>{item.title}</strong>
-                      <small>{item.id} · {item.durationMs} ms</small>
+                      <small>{item.trust} · {item.durationMs} ms</small>
                     </button>
                   ))}
                 </div>

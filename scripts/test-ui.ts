@@ -96,15 +96,10 @@ async function testStudioPage() {
   record("studio status 200", response.status === 200, `got ${response.status}`);
   record("studio shell present", html.includes("studioShell"));
   record("studio incident list", html.includes("Vendor email exfiltration"));
-  record("studio replay view", html.includes("Causal span replay"));
-  record("studio interactive graph", html.includes("interactiveGraph"));
-  record("studio graph reset control", html.includes("Reset layout"));
-  record(
-    "studio graph play control",
-    html.includes("interactiveGraphPlaybackOverlay"),
-  );
-  record("studio graph story overlay", html.includes("interactiveGraphStory"));
-  record("studio active span debugger", html.includes("Active span"));
+  record("studio replay view", html.includes("Play the breach"));
+  record("studio incident arena", html.includes("incidentArena"));
+  record("studio arena play control", html.includes("incidentArenaControls"));
+  record("studio arena hero stage", html.includes("incidentArenaHero"));
   record("studio findings tab", html.includes("Findings"));
   record("studio spans tab", html.includes("Spans"));
   record("studio report tab", html.includes("Report"));
