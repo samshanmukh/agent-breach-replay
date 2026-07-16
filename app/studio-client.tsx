@@ -1013,7 +1013,7 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
           {tab === "replay" ? (
             <div className="obsReplay">
               <div className="obsSectionHeader">
-                <div><span className="obsEyebrow">Trace debugger</span><h2>Causal span replay</h2></div>
+                <div><span className="obsEyebrow">Story replay</span><h2>How the incident unfolded</h2></div>
                 <div className="obsLegend">
                   {(["trusted", "untrusted", "protected", "external"] as Trust[]).map((tone) => (
                     <span key={tone}><i className={tone} />{tone}</span>
@@ -1039,38 +1039,6 @@ export default function StudioClient({ userEmail }: { userEmail: string }) {
                 selectedId={selectedEvent.id}
                 visitedIds={new Set(run.events.slice(0, stepIndex + 1).map((item) => item.id))}
               />
-              <div className="obsTimeline">
-                <div className="obsPlayback">
-                  <button onClick={() => {
-                    const next = Math.max(0, stepIndex - 1);
-                    setStepIndex(next);
-                    setSelectedEventId(run.events[next].id);
-                  }} type="button">‹</button>
-                  <button className="play" onClick={() => setPlaying((value) => !value)} type="button">
-                    {playing ? "Pause trace" : "Replay trace"}
-                  </button>
-                  <button onClick={() => {
-                    const next = Math.min(run.events.length - 1, stepIndex + 1);
-                    setStepIndex(next);
-                    setSelectedEventId(run.events[next].id);
-                  }} type="button">›</button>
-                  <code>{stepIndex + 1} / {run.events.length}</code>
-                </div>
-                <div className="obsTimelineSteps">
-                  {run.events.map((item, index) => (
-                    <button
-                      className={cx(index === stepIndex && "active", index < stepIndex && "past")}
-                      key={item.id}
-                      onClick={() => selectEvent(item)}
-                      type="button"
-                    >
-                      <span>{item.kind} · {String(index + 1).padStart(2, "0")}</span>
-                      <strong>{item.title}</strong>
-                      <small>{item.id} · {item.durationMs} ms</small>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           ) : null}
 
